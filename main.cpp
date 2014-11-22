@@ -10,3 +10,8 @@ int main(int argc, char *argv[])
 
     return a.exec();
 }
+
+//TODO : how to communicate another Widget or window or dialog
+//TODO : FTP functions
+//TODO : monitoring functions
+//TODO : make playlist.txt
