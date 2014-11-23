@@ -1,13 +1,13 @@
 #ifndef MONITOR_H
 #define MONITOR_H
 
-#include <QWidget>
+#include <QDialog>
 
 namespace Ui {
 class Monitor;
 }
 
-class Monitor : public QWidget
+class Monitor : public QDialog
 {
     Q_OBJECT
 

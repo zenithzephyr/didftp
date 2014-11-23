@@ -1,8 +1,10 @@
 #include "monitor.h"
 #include "ui_monitor.h"
 
+#include <QDebug>
+
 Monitor::Monitor(QWidget *parent) :
-    QWidget(parent),
+    QDialog(parent),
     ui(new Ui::Monitor)
 {
     ui->setupUi(this);
@@ -13,6 +15,8 @@ Monitor::Monitor(QWidget *parent) :
 Monitor::~Monitor()
 {
     delete ui;
+
+    qDebug()<<"Monitor deleted.";
 }
 
 void Monitor::createTable()

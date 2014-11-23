@@ -4,15 +4,62 @@
 #include "mainwindow.h"
 #include "qftp.h"
 
+#include <QDataStream>
+#include <QFile>
+
 Login::Login(QWidget *parent) :
-    QWidget(parent),
+    QDialog(parent),
     ui(new Ui::Login)
 {
     ui->setupUi(this);
 
-    //get previous ip, name, pwd from files
+    ui->pwdText->setEchoMode(QLineEdit::Password);
+
+    readInfo();
 
     connect(ui->loginButton, SIGNAL(clicked()), this, SLOT(connectFtp()));
+    connect(this, SIGNAL(sendConnectInfo(QString,QString,QString)), parentWidget(), SLOT(connectFtp(QString,QString,QString)));
+}
+
+void Login::connectFtp()
+{
+    emit sendConnectInfo(ui->ipText->text(), ui->idText->text(), ui->pwdText->text());
+}
+
+void Login::readInfo()
+{
+    QFile file("temp.dat"); //FIXME
+    if(!file.open(QFile::ReadOnly| QFile::Text)) {
+        qDebug()<<"cannot read file";
+    }
+
+    QDataStream in(&file);
+    in.setVersion(QDataStream::Qt_5_3);
+
+    QString ip, id, pwd;
+
+    in >> ip >> id >> pwd;
+    ui->ipText->insert(ip);
+    ui->idText->insert(id);
+    ui->pwdText->insert(pwd);
+
+    file.close();
+}
+
+void Login::writeInfo()
+{
+    QFile file("temp.dat"); //FIXME
+    if(!file.open(QFile::WriteOnly | QFile::Text)) {
+        qDebug()<<"cannot write file";
+    }
+
+    QDataStream out(&file);
+    out.setVersion(QDataStream::Qt_5_3);
+
+    out << ui->ipText->text() << ui->idText->text() << ui->pwdText->text();
+
+    file.close();
+    //TODO Check Error
 }
 
 Login::~Login()
@@ -20,57 +67,3 @@ Login::~Login()
     delete ui;
 }
 
-void Login::addToList(QUrlInfo url)
-{
-    qDebug()<<url.name();
-}
-
-void Login::connectFtp()
-{
-   //try to connect ftp
-    QFtp *ftp = new QFtp(this);
-
-    connect(ftp, SIGNAL(listInfo(QUrlInfo)),
-            this, SLOT(addToList(QUrlInfo)));
-
-    ftp->connectToHost("192.168.0.112", 21);
-    ftp->login("ftpuser","1234");
-
-    ftp->list();
-#if 0
-    connect(ftp, SIGNAL(commandFinished(int,bool)),
-            this, SLOT(ftpCommandFinished(int,bool)));
-    connect(ftp, SIGNAL(dataTransferProgress(qint64,qint64)),
-            this, SLOT(updateDataTransferProgress(qint64,qint64)));
-
-    fileList->clear();
-    currentPath.clear();
-    isDirectory.clear();
-//![1]
-
-//![2]
-    QUrl url(ftpServerLineEdit->text());
-    if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
-        ftp->connectToHost(ftpServerLineEdit->text(), 21);
-        ftp->login();
-    } else {
-        ftp->connectToHost(url.host(), url.port(21));
-
-        if (!url.userName().isEmpty())
-            ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
-        else
-            ftp->login();
-        if (!url.path().isEmpty())
-            ftp->cd(url.path());
-    }
-#endif
-
-   //if connected goto mainwindow
-
-   MainWindow *mainwindow = new MainWindow();
-   //MainWindow mainwindow;
-   mainwindow->show();
-
-   hide();
-   //quit();
-}

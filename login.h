@@ -1,14 +1,14 @@
 #ifndef LOGIN_H
 #define LOGIN_H
 
-#include <QWidget>
+#include <QDialog>
 #include "qurlinfo.h"
 
 namespace Ui {
 class Login;
 }
 
-class Login : public QWidget
+class Login : public QDialog
 {
     Q_OBJECT
 
@@ -19,9 +19,15 @@ public:
 private:
     Ui::Login *ui;
 
+public:
+    void writeInfo();
+    void readInfo();
+
 private slots:
     void connectFtp();
-    void addToList(QUrlInfo url);
+
+signals:
+    void sendConnectInfo(QString,QString,QString);
 };
 
 #endif // LOGIN_H
