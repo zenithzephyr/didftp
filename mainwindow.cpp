@@ -5,6 +5,10 @@
 #include "login.h"
 
 #include <QMessageBox>
+#include <QThread>
+
+QStringList unparsedDirectory;
+QString currentDirectory("");
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -75,14 +79,19 @@ void MainWindow::showUpload(QModelIndex index)
 
     //check ftp directory
 
-    upload->show();
+    QTableWidgetItem *item = ui->ftpList->item(index.row(),index.column());
+    if(item && !item->text().isEmpty())
+    {
+        upload->initData(item->text());
+        upload->show();
+    }
 }
 
 void MainWindow::createTable()
 {
     ui->ftpList->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->ftpList->setColumnCount(4);
-    ui->ftpList->setRowCount(4);
+    ui->ftpList->setRowCount(40);
     ui->ftpList->setHorizontalHeaderLabels(QStringList() << tr("Directory") << tr("Download") << tr("File") << tr("Subtitle"));
     ui->ftpList->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
     ui->ftpList->horizontalHeader()->setStretchLastSection(true);
@@ -93,20 +102,37 @@ void MainWindow::createTable()
 
 void MainWindow::insideList(QTableWidgetItem *item)
 {
-    ftp->list(item->text());
+    //FIXME : get files recrusive
+    //ftp->list(item->text());
 }
-
 
 void MainWindow::addToList(QUrlInfo url)
 {
     qDebug()<<url.name();
-    if(url.isDir())
+
+    //TODO : check playlist.txt
+
+#if 1
+    if(url.isDir() && !url.isSymLink())
     {
+        if(currentDirectory.isEmpty()) {
+            unparsedDirectory << url.name();
+            qDebug()<<"DIR NAME = "  + url.name();
+        }
+        else {
+            unparsedDirectory << currentDirectory + "/" + url.name();
+            qDebug()<<"DIR NAME = " + currentDirectory + "/" + url.name();
+        }
+
+#if 0
         QTableWidgetItem *item = new QTableWidgetItem(url.name());
         ui->ftpList->setItem(row,0,item);
         row++;
+#endif
     }
+#endif
 }
+
 
 void MainWindow::connectFtp(QString ip, QString id, QString pwd)
 {
@@ -175,6 +201,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
         }
 
         ftp->list();
+        currentDirectory = "";
 
         login->hide();
         show();
@@ -182,6 +209,17 @@ void MainWindow::ftpCommandFinished(int, bool error)
         return;
     }
 
+    if (ftp->currentCommand() == QFtp::List) //Recrusive
+    {
+        qDebug()<<"LIST COMMAND FINISHED";
+        if(unparsedDirectory.size())
+        {
+            qDebug() << "NEXT DIR " + unparsedDirectory.at(0);
+            ftp->list(unparsedDirectory.at(0));
+            currentDirectory = unparsedDirectory.at(0);
+            unparsedDirectory.removeFirst();
+        }
+    }
 #if 0
 //![7]
 
@@ -216,4 +254,23 @@ void MainWindow::updateDataTransferProgress(qint64 readBytes,
                                            qint64 totalBytes)
 {
     qDebug()<<"updateDataTransferProgress";
+}
+
+void MainWindow::removeFiles(QStringList removeList)
+{
+    int i;
+    qDebug()<<"removeFiles";
+
+    for(i=0;i<removeList.size();i++)
+        qDebug()<<removeList.at(i);
+}
+
+
+void MainWindow::uploadFiles(QStringList uploadList)
+{
+    qDebug()<<"uploadFiles";
+
+    int i;
+    for(i=0;i<uploadList.size();i++)
+        qDebug()<<uploadList.at(i);
 }

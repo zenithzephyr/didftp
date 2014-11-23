@@ -1,6 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QStringList>
+#include <QString>
 #include <QMainWindow>
 #include <QTableWidget>
 #include <QDebug>
@@ -53,6 +55,8 @@ private slots:
     void updateDataTransferProgress(qint64 readBytes,
                                            qint64 totalBytes);
     void ftpCommandFinished(int, bool error);
+    void removeFiles(QStringList removeList);
+    void uploadFiles(QStringList uploadList);
 };
 
 #endif // MAINWINDOW_H

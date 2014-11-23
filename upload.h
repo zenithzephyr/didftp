@@ -16,19 +16,22 @@ public:
     explicit Upload(QWidget *parent = 0);
     ~Upload();
 
+    void initData(QString directoryName);
+
 private:
     Ui::Upload *ui;
 
-    //QStringList ftpFiles;
-    //QStringList localFiles;
     QStringList removeList;
-
-    void updateList();
+    QStringList uploadList;
 
 private slots:
     void addClicked();
     void deleteClicked();
     void transmitClicked();
+
+signals:
+    void removeFiles(QStringList);
+    void uploadFiles(QStringList);
 };
 
 #endif // UPLOAD_H
