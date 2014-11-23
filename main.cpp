@@ -12,6 +12,6 @@ int main(int argc, char *argv[])
 }
 
 //TODO : how to communicate another Widget or window or dialog
-//TODO : FTP functions
+//TODO : FTP functions (connect, put, get, delete, mkdir, list)
 //TODO : monitoring functions
 //TODO : make playlist.txt

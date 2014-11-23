@@ -2,6 +2,7 @@
 #define LOGIN_H
 
 #include <QWidget>
+#include "qurlinfo.h"
 
 namespace Ui {
 class Login;
@@ -20,6 +21,7 @@ private:
 
 private slots:
     void connectFtp();
+    void addToList(QUrlInfo url);
 };
 
 #endif // LOGIN_H
