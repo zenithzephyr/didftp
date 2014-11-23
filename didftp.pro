@@ -31,3 +31,10 @@ FORMS    += login.ui \
     mainwindow.ui \
     upload.ui \
     monitor.ui
+
+TRANSLATIONS = didftp_ko.ts
+
+RESOURCES += \
+    resource.qrc
+
+OTHER_FILES +=
