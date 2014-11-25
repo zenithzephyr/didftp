@@ -5,10 +5,16 @@
 #include "login.h"
 
 #include <QMessageBox>
-#include <QThread>
+#include <QFileInfo>
 
 QStringList unparsedDirectory;
+QStringList fullFilesList;
+QStringList playlistPath;
 QString currentDirectory("");
+QMap<QString, QUrlInfo> fullFilesMap;
+QMap<QString, QString> playlistMap;
+
+int num = 0;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -96,41 +102,52 @@ void MainWindow::createTable()
     ui->ftpList->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
     ui->ftpList->horizontalHeader()->setStretchLastSection(true);
    // ui->ftpList->verticalHeader()->setStretchLastSection(true);
-
-    connect(ui->ftpList, SIGNAL(itemChanged(QTableWidgetItem*)), this, SLOT(insideList(QTableWidgetItem*)));
-}
-
-void MainWindow::insideList(QTableWidgetItem *item)
-{
-    //FIXME : get files recrusive
-    //ftp->list(item->text());
 }
 
 void MainWindow::addToList(QUrlInfo url)
 {
     qDebug()<<url.name();
 
-    //TODO : check playlist.txt
-
-#if 1
     if(url.isDir() && !url.isSymLink())
     {
-        if(currentDirectory.isEmpty()) {
+        if(currentDirectory.isEmpty())
             unparsedDirectory << url.name();
-            qDebug()<<"DIR NAME = "  + url.name();
-        }
-        else {
+        else
             unparsedDirectory << currentDirectory + "/" + url.name();
-            qDebug()<<"DIR NAME = " + currentDirectory + "/" + url.name();
-        }
-
-#if 0
-        QTableWidgetItem *item = new QTableWidgetItem(url.name());
-        ui->ftpList->setItem(row,0,item);
-        row++;
-#endif
     }
-#endif
+
+    if(currentDirectory.isEmpty())
+    {
+        if(url.isDir() && !url.isSymLink())
+        {
+            fullFilesList << url.name() + "/";
+            fullFilesMap[url.name() + "/"] = url;
+        }
+        else
+        {
+            if(url.name() == "playlist.txt")
+                playlistPath << "/";
+
+            fullFilesList << url.name();
+            fullFilesMap[url.name()] = url;
+        }
+    }
+    else
+    {
+        if(url.isDir() && !url.isSymLink())
+        {
+            fullFilesList << currentDirectory + "/" + url.name() + "/";
+            fullFilesMap[currentDirectory + "/" + url.name() + "/"] = url;
+        }
+        else
+        {
+            if(url.name() == "playlist.txt")
+                playlistPath << currentDirectory + "/";
+
+            fullFilesList << currentDirectory + "/" + url.name();
+            fullFilesMap[currentDirectory + "/" + url.name()] = url;
+        }
+    }
 }
 
 
@@ -148,30 +165,6 @@ void MainWindow::connectFtp(QString ip, QString id, QString pwd)
 
     ftp->connectToHost(ip, 21); //FIXME : port editable
     ftp->login(id, pwd);
-
-#if 0
-    fileList->clear();
-    currentPath.clear();
-    isDirectory.clear();
-//![1]
-
-//![2]
-    QUrl url(ftpServerLineEdit->text());
-    if (!url.isValid() || url.scheme().toLower() != QLatin1String("ftp")) {
-        ftp->connectToHost(ftpServerLineEdit->text(), 21);
-        ftp->login();
-    } else {
-        ftp->connectToHost(url.host(), url.port(21));
-
-        if (!url.userName().isEmpty())
-            ftp->login(QUrl::fromPercentEncoding(url.userName().toLatin1()), url.password());
-        else
-            ftp->login();
-        if (!url.path().isEmpty())
-            ftp->cd(url.path());
-    }
-#endif
-
 }
 
 void MainWindow::ftpCommandFinished(int, bool error)
@@ -187,7 +180,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
         }
 
         qDebug()<<"Connected..";
-        //connected
+        //connected but not logined
 
         return;
     }
@@ -200,7 +193,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
             return;
         }
 
-        ftp->list();
+        ftp->list(); //get all list
         currentDirectory = "";
 
         login->hide();
@@ -211,33 +204,43 @@ void MainWindow::ftpCommandFinished(int, bool error)
 
     if (ftp->currentCommand() == QFtp::List) //Recrusive
     {
-        qDebug()<<"LIST COMMAND FINISHED";
         if(unparsedDirectory.size())
         {
-            qDebug() << "NEXT DIR " + unparsedDirectory.at(0);
             ftp->list(unparsedDirectory.at(0));
             currentDirectory = unparsedDirectory.at(0);
             unparsedDirectory.removeFirst();
         }
-    }
+        else
+        {
+            fullFilesList.sort();
 #if 0
-//![7]
+            int i;
+            for(i=0;i<fullFilesList.size();i++)
+                qDebug()<<"[ " + fullFilesList.at(i) + " ]";
+#endif
+            getPlaylist();
+        }
+    }
 
-//![8]
     if (ftp->currentCommand() == QFtp::Get) {
         if (error) {
-        //    statusLabel->setText(tr("Canceled download of %1.")
-         //                        .arg(file->fileName()));
+            //    statusLabel->setText(tr("Canceled download of %1.")
+            //                        .arg(file->fileName()));
             file->close();
             file->remove();
         } else {
-          //  statusLabel->setText(tr("Downloaded %1 to current directory.")
-           //                      .arg(file->fileName()));
+            //  statusLabel->setText(tr("Downloaded %1 to current directory.")
+            //                      .arg(file->fileName()));
             file->close();
         }
         delete file;
-        enableDownloadButton();
-        progressDialog->hide();
+        //      enableDownloadButton();
+        //     progressDialog->hide();
+
+        //TODO Check if(playlist downloading?)
+        getPlaylist();
+    }
+#if 0
 //![8]
 //![9]
     } else if (ftp->currentCommand() == QFtp::List) {
@@ -273,4 +276,91 @@ void MainWindow::uploadFiles(QStringList uploadList)
     int i;
     for(i=0;i<uploadList.size();i++)
         qDebug()<<uploadList.at(i);
+}
+
+void MainWindow::makeTableData()
+{
+    int i;
+    QTableWidgetItem *item = new QTableWidgetItem("/"); //root
+    ui->ftpList->setItem(0,0,item);
+
+    for(i=0;i<fullFilesList.size();i++)
+    {
+        if(fullFilesList.at(i).endsWith("/")) //directory
+        {
+            QTableWidgetItem *item = new QTableWidgetItem("/"+fullFilesMap[fullFilesList.at(i)].name());
+            ui->ftpList->setItem(i+1,0,item);
+        }
+        else //files
+        {
+            QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
+            ui->ftpList->setItem(i+1,2,item);
+        }
+        row++;
+    }
+}
+
+void MainWindow::getPlaylist()
+{
+    num++; //FIXME
+
+    if(playlistPath.size())
+    {
+        QString fileName = QString("playlist%1.txt").arg(num); //FIXME filename : filename must can found.
+        file = new QFile(fileName);
+
+        if (!file->open(QIODevice::WriteOnly)) {
+            QMessageBox::information(this, tr("FTP"),
+                                     tr("Unable to save the file %1: %2.")
+                                     .arg(fileName).arg(file->errorString()));
+            delete file;
+        }
+
+        ftp->get(playlistPath.at(0) + "/playlist.txt",file);
+
+        playlistMap[playlistPath.at(0)] = fileName;
+        playlistPath.removeFirst();
+    }
+    else
+    {
+        QMapIterator<QString, QString> i(playlistMap);
+        while(i.hasNext()) {
+            i.next();
+            qDebug()<< i.key() << ": " << i.value() << endl;
+            manipulateData(i.key(), i.value()); //key : ftp playlistPath, value : downloaded playlist.txt fileName
+        }
+
+        //check playlist.txt file list
+        //if has playlist remove directory files and download playlist file
+        //manipulateData (delete playlist.txt and other files if playlist.txt directory)
+        makeTableData();
+    }
+}
+
+void MainWindow::manipulateData(const QString &path, const QString &fileName)
+{
+    //parse playlist.txt
+    QFile *pFile = new QFile(fileName);
+
+    if (!pFile->open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("FTP"),
+                                 tr("Unable to save the file %1: %2.")
+                                .arg(fileName).arg(file->errorString()));
+        delete file;
+    }
+
+    QTextStream in(pFile);
+    QString line;
+    do {
+        line = in.readLine();
+        if(line.k) //not match ver: end] send: run:
+        qDebug()<< line;
+    } while(!line.isNull());
+
+
+    pFile->close();
+    delete pFile;
+    //fullFilesList
+    //fullFilesMap
+    //for(i=0;i<fullFilesList.)
 }

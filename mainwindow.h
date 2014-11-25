@@ -7,6 +7,7 @@
 #include <QTableWidget>
 #include <QDebug>
 #include <QMenuBar>
+#include <QFile>
 #include "qftp.h"
 #include "login.h"
 #include "upload.h"
@@ -34,6 +35,8 @@ private:
     QMenu *controlMenu;
 
     QFtp *ftp;
+    QFile *file;
+
     Login *login;
     Upload *upload;
     Monitor *monitor;
@@ -44,16 +47,17 @@ private:
     void createMenus();
     void createTable();
     void updateStatusBar();
+    void makeTableData();
+    void getPlaylist();
+    void manipulateData(const QString &path, const QString &fileName);
 
 private slots:
-    void insideList(QTableWidgetItem*);
     void showMonitor();
     void showUpload(QModelIndex index);
 
     void addToList(QUrlInfo url);
     void connectFtp(QString ip, QString id, QString pwd);
-    void updateDataTransferProgress(qint64 readBytes,
-                                           qint64 totalBytes);
+    void updateDataTransferProgress(qint64 readBytes, qint64 totalBytes);
     void ftpCommandFinished(int, bool error);
     void removeFiles(QStringList removeList);
     void uploadFiles(QStringList uploadList);

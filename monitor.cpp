@@ -15,8 +15,6 @@ Monitor::Monitor(QWidget *parent) :
 Monitor::~Monitor()
 {
     delete ui;
-
-    qDebug()<<"Monitor deleted.";
 }
 
 void Monitor::createTable()
