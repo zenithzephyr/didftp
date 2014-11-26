@@ -70,7 +70,7 @@ void Upload::transmitClicked()
 
 void Upload::initData(QString directoryName)
 {
-    ui->directoryText->setText("/"+directoryName);
+    ui->directoryText->setText(directoryName);
     removeList.clear();
     uploadList.clear();
     ui->fileList->clear();

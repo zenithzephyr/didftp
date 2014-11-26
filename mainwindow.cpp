@@ -12,6 +12,7 @@ QStringList fullFilesList;
 QStringList playlistPath;
 QString currentDirectory("");
 QMap<QString, QUrlInfo> fullFilesMap;
+QMap<QString, QString> TimeMap;
 QMap<QString, QString> playlistMap;
 
 int num = 0;
@@ -289,7 +290,13 @@ void MainWindow::makeTableData()
         if(fullFilesList.at(i).endsWith("/")) //directory
         {
             QTableWidgetItem *item = new QTableWidgetItem("/"+fullFilesMap[fullFilesList.at(i)].name());
+
             ui->ftpList->setItem(i+1,0,item);
+            if(!TimeMap[fullFilesList.at(i)].isEmpty())
+            {
+            QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullFilesList.at(i)]);
+            ui->ftpList->setItem(i+1,1,item2);
+            }
         }
         else //files
         {
@@ -351,16 +358,94 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
 
     QTextStream in(pFile);
     QString line;
+    QStringList playlistFiles;
+#if 0
+    QRegExp token1("[ver:");
+    QRegExp token2("[send:");
+    QRegExp token3("[run:");
+    QRegExp token4("[end]");
+#endif
+
     do {
         line = in.readLine();
-        if(line.k) //not match ver: end] send: run:
-        qDebug()<< line;
+      //  if(!(token1.indexIn(line) ||
+       //         token2.indexIn(line) ||
+        //        token3.indexIn(line) ||
+         //       token4.indexIn(line))) //not match ver: end] send: run:
+        if(line.startsWith("[ver:"))
+        {
+            //version parsing
+        }
+        else if(line.startsWith("[send:"))
+        {
+           //time parsing
+            QStringList token = line.split(":");
+
+            QString clist = token.at(1);
+
+            QDateTime dtime;
+            dtime.setTime_t(clist.remove(QChar(']')).toInt());
+            TimeMap[path] =dtime.toString("yyyy/mm/dd hh:mm:ss");
+        }
+        else if(line.startsWith("[run:"))
+        {
+            //? not implemented
+        }
+        else if(line.startsWith("[end]"))
+        {
+            //end tag
+        }
+        else if(!line.isEmpty())
+        {
+            line.remove(QChar('['));
+            //cut string
+            QStringList clist = line.split(",");
+            playlistFiles << clist.at(0);
+            qDebug()<<"File : " << clist.at(0);
+        }
     } while(!line.isNull());
 
 
     pFile->close();
     delete pFile;
-    //fullFilesList
-    //fullFilesMap
-    //for(i=0;i<fullFilesList.)
+
+    int i, j;
+    for(i=0;i<fullFilesList.size();i++)
+    {
+        for(j=0;j<playlistFiles.size();j++)
+    {
+        if(fullFilesList.at(i).contains(playlistFiles.at(j)) && !fullFilesList.at(i).contains("///"))
+        {
+            QString addpath = fullFilesList.at(i) + "///";
+
+            fullFilesList << addpath;
+
+            fullFilesList.removeAt(i);
+            i--;
+        }
+    }
+
+        if(fullFilesList.at(i).startsWith(path) && (fullFilesList.at(i).count("/") == path.count("/")) && fullFilesList.at(i) != path)
+        {
+            //delete files
+            qDebug() << "DELETED : " << fullFilesList.at(i);
+            fullFilesMap.remove(fullFilesList.at(i));
+            fullFilesList.removeAt(i);
+            i--;
+        }
+    }
+
+    for(i=0;i<fullFilesList.size();i++)
+    {
+        if(fullFilesList.at(i).contains("///"))
+        {
+        QString removepath = fullFilesList.at(i);
+        removepath.replace("///", "");
+
+        fullFilesList << removepath;
+        fullFilesList.removeAt(i);
+        }
+    }
+
+    fullFilesList.sort();
 }
