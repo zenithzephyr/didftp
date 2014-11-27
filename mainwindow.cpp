@@ -10,7 +10,10 @@
 QStringList unparsedDirectory;
 QStringList fullFilesList;
 QStringList playlistPath;
+QStringList upList;
+QStringList rmList;
 QString currentDirectory("");
+QString currentPath;
 QMap<QString, QUrlInfo> fullFilesMap;
 QMap<QString, QString> TimeMap;
 QMap<QString, QString> playlistMap;
@@ -86,10 +89,36 @@ void MainWindow::showUpload(QModelIndex index)
 
     //check ftp directory
 
-    QTableWidgetItem *item = ui->ftpList->item(index.row(),index.column());
+    QTableWidgetItem *item = ui->ftpList->item(index.row(),0);
     if(item && !item->text().isEmpty())
     {
-        upload->initData(item->text());
+        int i;
+        QStringList directoryFiles;
+        QString token = item->text();
+
+        token.remove(0,1);
+        token.append(QChar('/'));
+        qDebug()<<token;
+        if(index.row() == 0) //root dir
+        {
+            for(i=0;i<fullFilesList.size();i++)
+            {
+                if(!fullFilesList.at(i).contains("/"))
+                    directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
+            }
+        }
+        else
+        {
+            for(i=0;i<fullFilesList.size();i++)
+            {
+                if(fullFilesList.at(i).contains(token) &&
+                                (fullFilesList.at(i).count("/") == token.count("/")) && fullFilesList.at(i) != token)
+                {
+                    directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
+                }
+            }
+        }
+        upload->initData(item->text(), directoryFiles);
         upload->show();
     }
 }
@@ -241,42 +270,92 @@ void MainWindow::ftpCommandFinished(int, bool error)
         //TODO Check if(playlist downloading?)
         getPlaylist();
     }
-#if 0
-//![8]
-//![9]
-    } else if (ftp->currentCommand() == QFtp::List) {
-        if (isDirectory.isEmpty()) {
-            fileList->addTopLevelItem(new QTreeWidgetItem(QStringList() << tr("<empty>")));
-            fileList->setEnabled(false);
+
+    if(ftp->currentCommand() == QFtp::Put)
+    {
+        qDebug()<<"PUT END";
+
+        file->close();
+        delete file;
+
+        if(upList.size())
+        {
+            doUpload();
+        }
+        else
+        {
+            //TODO : do something :refresh, etc
+           // refeshTable();
+            upload->close();
         }
     }
-//![9]
-#endif
+
+    if(ftp->currentCommand() == QFtp::Remove)
+    {
+        qDebug()<<"DELETE END";
+
+        if(rmList.size())
+            doRemove();
+    }
 }
 
 void MainWindow::updateDataTransferProgress(qint64 readBytes,
                                            qint64 totalBytes)
 {
-    qDebug()<<"updateDataTransferProgress";
+  //  qDebug()<<"updateDataTransferProgress";
+  //  qDebug("Total : %ld, read : %ld",totalBytes, readBytes);
+    upload->setProgress(readBytes, totalBytes);
 }
 
-void MainWindow::removeFiles(QStringList removeList)
+void MainWindow::removeFiles(QString path, QStringList removeList)
 {
     int i;
     qDebug()<<"removeFiles";
 
     for(i=0;i<removeList.size();i++)
-        qDebug()<<removeList.at(i);
+        rmList << removeList.at(i);
+
+    currentPath = path;
+
+    if(rmList.size())
+        doRemove();
 }
 
+void MainWindow::doRemove()
+{
+    ftp->remove(currentPath+"/"+rmList.at(0));
 
-void MainWindow::uploadFiles(QStringList uploadList)
+    rmList.removeFirst();
+}
+
+void MainWindow::uploadFiles(QString path, QStringList uploadList)
 {
     qDebug()<<"uploadFiles";
 
     int i;
     for(i=0;i<uploadList.size();i++)
-        qDebug()<<uploadList.at(i);
+        upList << uploadList.at(i);
+
+    currentPath = path;
+
+    if(upList.size())
+        doUpload();
+}
+
+void MainWindow::doUpload()
+{
+    file = new QFile(upList.at(0));
+
+    if (!file->open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("FTP"),
+                                 tr("Unable to read the file %1: %2.")
+                                 .arg(file->fileName()).arg(file->errorString()));
+        delete file;
+    }
+
+    ftp->put(file, currentPath+"/"+QFileInfo(file->fileName()).fileName());
+
+    upList.removeFirst();
 }
 
 void MainWindow::makeTableData()
@@ -285,25 +364,46 @@ void MainWindow::makeTableData()
     QTableWidgetItem *item = new QTableWidgetItem("/"); //root
     ui->ftpList->setItem(0,0,item);
 
+    if(!TimeMap["/"].isEmpty())
+    {
+        QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap["/"]);
+        ui->ftpList->setItem(0,1,item2);
+    }
+
     for(i=0;i<fullFilesList.size();i++)
     {
+        if(!fullFilesList.at(i).contains("/"))
+        {
+            row++;
+            QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
+            ui->ftpList->setItem(row,2,item);
+        }
+    }
+
+    for(i=0;i<fullFilesList.size();i++)
+    {
+        if(!fullFilesList.at(i).contains("/"))
+        {
+            row--;
+            continue;
+        }
+
         if(fullFilesList.at(i).endsWith("/")) //directory
         {
             QTableWidgetItem *item = new QTableWidgetItem("/"+fullFilesMap[fullFilesList.at(i)].name());
 
-            ui->ftpList->setItem(i+1,0,item);
+            ui->ftpList->setItem(i+row+1,0,item);
             if(!TimeMap[fullFilesList.at(i)].isEmpty())
             {
             QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullFilesList.at(i)]);
-            ui->ftpList->setItem(i+1,1,item2);
+            ui->ftpList->setItem(i+row+1,1,item2);
             }
         }
         else //files
         {
             QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
-            ui->ftpList->setItem(i+1,2,item);
+            ui->ftpList->setItem(i+row+1,2,item);
         }
-        row++;
     }
 }
 
@@ -318,7 +418,7 @@ void MainWindow::getPlaylist()
 
         if (!file->open(QIODevice::WriteOnly)) {
             QMessageBox::information(this, tr("FTP"),
-                                     tr("Unable to save the file %1: %2.")
+                                     tr("Unable to write the file %1: %2.")
                                      .arg(fileName).arg(file->errorString()));
             delete file;
         }
@@ -352,40 +452,35 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     if (!pFile->open(QIODevice::ReadOnly)) {
         QMessageBox::information(this, tr("FTP"),
                                  tr("Unable to save the file %1: %2.")
-                                .arg(fileName).arg(file->errorString()));
+                                 .arg(fileName).arg(file->errorString()));
         delete file;
     }
 
     QTextStream in(pFile);
     QString line;
     QStringList playlistFiles;
-#if 0
-    QRegExp token1("[ver:");
-    QRegExp token2("[send:");
-    QRegExp token3("[run:");
-    QRegExp token4("[end]");
-#endif
 
     do {
         line = in.readLine();
-      //  if(!(token1.indexIn(line) ||
-       //         token2.indexIn(line) ||
+        //  if(!(token1.indexIn(line) ||
+        //         token2.indexIn(line) ||
         //        token3.indexIn(line) ||
-         //       token4.indexIn(line))) //not match ver: end] send: run:
+        //       token4.indexIn(line))) //not match ver: end] send: run:
         if(line.startsWith("[ver:"))
         {
             //version parsing
         }
         else if(line.startsWith("[send:"))
         {
-           //time parsing
+            //time parsing
             QStringList token = line.split(":");
 
             QString clist = token.at(1);
-
             QDateTime dtime;
-            dtime.setTime_t(clist.remove(QChar(']')).toInt());
-            TimeMap[path] =dtime.toString("yyyy/mm/dd hh:mm:ss");
+
+            clist.remove(clist.size()-1,1);
+            dtime.setTime_t(clist.toInt());
+            TimeMap[path] =dtime.toString("yyyy/MM/dd hh:mm:ss");
         }
         else if(line.startsWith("[run:"))
         {
@@ -397,7 +492,7 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
         }
         else if(!line.isEmpty())
         {
-            line.remove(QChar('['));
+            line.remove(0,1);
             //cut string
             QStringList clist = line.split(",");
             playlistFiles << clist.at(0);
@@ -410,40 +505,49 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     delete pFile;
 
     int i, j;
-    for(i=0;i<fullFilesList.size();i++)
+    //FIXME
+    QMutableStringListIterator iter(fullFilesList);
+
+    while(iter.hasNext())
     {
+        bool removeFlag = false;
+        QString next = iter.next();
         for(j=0;j<playlistFiles.size();j++)
-    {
-        if(fullFilesList.at(i).contains(playlistFiles.at(j)) && !fullFilesList.at(i).contains("///"))
         {
-            QString addpath = fullFilesList.at(i) + "///";
+            if(next.contains(playlistFiles.at(j)) && !next.contains("///"))
+            {
+                QString addpath = next + "///";
 
-            fullFilesList << addpath;
-
-            fullFilesList.removeAt(i);
-            i--;
+                iter.insert(addpath);
+                removeFlag = true;
+            }
         }
+
+        qDebug() << "PATH : " << path;
+        if(path == "/" && next.count("/") == 0)
+            removeFlag = true;
+
+        if(next.startsWith(path) && (next.count("/") == path.count("/")) && next != path)
+        {
+            qDebug() << "DELETED : " << next;
+            removeFlag = true;
+        }
+
+        if(removeFlag)
+            iter.remove();
     }
 
-        if(fullFilesList.at(i).startsWith(path) && (fullFilesList.at(i).count("/") == path.count("/")) && fullFilesList.at(i) != path)
-        {
-            //delete files
-            qDebug() << "DELETED : " << fullFilesList.at(i);
-            fullFilesMap.remove(fullFilesList.at(i));
-            fullFilesList.removeAt(i);
-            i--;
-        }
-    }
-
-    for(i=0;i<fullFilesList.size();i++)
+    iter.toFront();
+    while(iter.hasNext())
     {
-        if(fullFilesList.at(i).contains("///"))
+        QString next = iter.next();
+        if(next.contains("///"))
         {
-        QString removepath = fullFilesList.at(i);
-        removepath.replace("///", "");
+            QString removepath = next;
+            removepath.replace("///", "");
 
-        fullFilesList << removepath;
-        fullFilesList.removeAt(i);
+            iter.insert(removepath);
+            iter.remove();
         }
     }
 

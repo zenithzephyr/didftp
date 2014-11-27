@@ -50,6 +50,8 @@ private:
     void makeTableData();
     void getPlaylist();
     void manipulateData(const QString &path, const QString &fileName);
+    void doUpload();
+    void doRemove();
 
 private slots:
     void showMonitor();
@@ -59,8 +61,8 @@ private slots:
     void connectFtp(QString ip, QString id, QString pwd);
     void updateDataTransferProgress(qint64 readBytes, qint64 totalBytes);
     void ftpCommandFinished(int, bool error);
-    void removeFiles(QStringList removeList);
-    void uploadFiles(QStringList uploadList);
+    void removeFiles(QString path, QStringList removeList);
+    void uploadFiles(QString path, QStringList uploadList);
 };
 
 #endif // MAINWINDOW_H

@@ -16,7 +16,8 @@ public:
     explicit Upload(QWidget *parent = 0);
     ~Upload();
 
-    void initData(QString directoryName);
+    void initData(QString directoryName, QStringList fileList);
+    void setProgress(qint64 readBytes, qint64 totalBytes);
 
 private:
     Ui::Upload *ui;
@@ -24,14 +25,16 @@ private:
     QStringList removeList;
     QStringList uploadList;
 
+    void makePlaylist();
+
 private slots:
     void addClicked();
     void deleteClicked();
     void transmitClicked();
 
 signals:
-    void removeFiles(QStringList);
-    void uploadFiles(QStringList);
+    void removeFiles(QString, QStringList);
+    void uploadFiles(QString, QStringList);
 };
 
 #endif // UPLOAD_H
