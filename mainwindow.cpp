@@ -284,8 +284,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
         }
         else
         {
-            //TODO : do something :refresh, etc
-           // refeshTable();
+            refreshTable(); //FIXME
             upload->close();
         }
     }
@@ -297,6 +296,26 @@ void MainWindow::ftpCommandFinished(int, bool error)
         if(rmList.size())
             doRemove();
     }
+}
+
+void MainWindow::refreshTable()
+{
+    unparsedDirectory.clear();
+    fullFilesList.clear();
+    playlistPath.clear();
+    upList.clear();
+    rmList.clear();
+    currentDirectory="";
+    currentPath.clear();
+    fullFilesMap.clear();
+    TimeMap.clear();
+    playlistMap.clear();
+    num = 0;
+    row = 0;
+
+    ui->ftpList->clear();
+
+    ftp->list();
 }
 
 void MainWindow::updateDataTransferProgress(qint64 readBytes,

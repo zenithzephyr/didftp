@@ -43,6 +43,7 @@ private:
 
     int row;
 
+    void refreshTable();
     void createActions();
     void createMenus();
     void createTable();
