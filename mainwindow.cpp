@@ -131,6 +131,9 @@ void MainWindow::createTable()
     ui->ftpList->setHorizontalHeaderLabels(QStringList() << tr("Directory") << tr("Download") << tr("File") << tr("Subtitle"));
     ui->ftpList->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
     ui->ftpList->horizontalHeader()->setStretchLastSection(true);
+    ui->ftpList->setColumnWidth(0, 120);
+    ui->ftpList->setColumnWidth(1, 160);
+    ui->ftpList->setColumnWidth(2, 260);
    // ui->ftpList->verticalHeader()->setStretchLastSection(true);
 }
 
