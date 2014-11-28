@@ -382,7 +382,7 @@ void MainWindow::doUpload()
 
 void MainWindow::makeTableData()
 {
-    int i;
+    int i,j;
     QTableWidgetItem *item = new QTableWidgetItem("/"); //root
     ui->ftpList->setItem(0,0,item);
 
@@ -390,6 +390,13 @@ void MainWindow::makeTableData()
     {
         QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap["/"]);
         ui->ftpList->setItem(0,1,item2);
+    }
+
+    for(i=0;i<4;i++)
+    {
+        if(ui->ftpList->item(0,i) == NULL)
+            ui->ftpList->setItem(0,i, new QTableWidgetItem);
+        ui->ftpList->item(0,i)->setBackground(Qt::gray);
     }
 
     for(i=0;i<fullFilesList.size();i++)
@@ -419,6 +426,13 @@ void MainWindow::makeTableData()
             {
             QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullFilesList.at(i)]);
             ui->ftpList->setItem(i+row+1,1,item2);
+            }
+
+            for(j=0;j<4;j++)
+            {
+                if(ui->ftpList->item(i+row+1,j) == NULL)
+                    ui->ftpList->setItem(i+row+1,j, new QTableWidgetItem);
+                ui->ftpList->item(i+row+1,j)->setBackground(Qt::gray);
             }
         }
         else //files
