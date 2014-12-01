@@ -18,6 +18,8 @@ Upload::Upload(QWidget *parent) :
     connect(ui->transmitButton, SIGNAL(clicked()), this, SLOT(transmitClicked()));
     connect(this, SIGNAL(removeFiles(QString, QStringList)), parentWidget(), SLOT(removeFiles(QString, QStringList)));
     connect(this, SIGNAL(uploadFiles(QString, QStringList)), parentWidget(), SLOT(uploadFiles(QString, QStringList)));
+
+    fileSizeMap.clear();
 }
 
 Upload::~Upload()
@@ -44,7 +46,7 @@ void Upload::deleteClicked()
     if(selected)
     {
         qDebug()<<selected->text();
-        if(!selected->text().contains(":/") || !selected->text().startsWith("/")) //ftp file to remove WINDOWS Only
+        if(!selected->text().contains(":/") && !selected->text().startsWith("/")) //ftp file to remove WINDOWS Only
             removeList<<selected->text();
 
         delete selected;
@@ -89,15 +91,27 @@ void Upload::makePlaylist()
     for(i=0;i<ui->fileList->count();i++)
     {
         QFileInfo info(ui->fileList->item(i)->text());
+        QString fileSize;
         qDebug() << info.fileName();
 
-        out << "[" + info.fileName() + "," + "]\r\n";
+        if(ui->fileList->item(i)->text().contains(":/") || ui->fileList->item(i)->text().startsWith("/")) //local files
+        {
+            fileSize = QString::number(info.size());
+            qDebug() <<"SIZE : " << fileSize;
+        }
+        else //ftp file
+        {
+            fileSize = QString::number(fileSizeMap[ui->fileList->item(i)->text()]); //FIXME HERE
+            qDebug() <<"SIZE : " << fileSize;
+        }
+
+        out << "[" + info.fileName() + "," + fileSize + "]\r\n";
     }
     out << "[end]\r\n";
     file.close();
 }
 
-void Upload::initData(QString directoryName, QStringList fileList)
+void Upload::initData(QString directoryName, QStringList fileList, QMap<QString, qint64> sizeMap) //FIXME Later...
 {
     ui->directoryText->setText(directoryName);
     removeList.clear();
@@ -110,14 +124,11 @@ void Upload::initData(QString directoryName, QStringList fileList)
 
     ui->fileList->addItems(fileList);
 
-    //TODO : init fileList from ftp
-    //TODO : read playlist.txt and add to fileList
-    //TODO : Upload progress
+    fileSizeMap = sizeMap;
 }
 
 void Upload::setProgress(qint64 readBytes, qint64 totalBytes)
 {
-    //qDebug("%d", (readBytes*100/totalBytes));
     ui->progressBar->setValue((readBytes*100/totalBytes));
     ui->progressBar->show();
 }

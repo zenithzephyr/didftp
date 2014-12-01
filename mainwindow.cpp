@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
     login->show();
 
     connect(ui->ftpList, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(showUpload(QModelIndex)));
-
+    connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshTable()));
     row = 0;
 }
 
@@ -86,6 +86,7 @@ void MainWindow::showMonitor()
 void MainWindow::showUpload(QModelIndex index)
 {
     qDebug()<<index;
+    QMap<QString, qint64> tmpFiles;
 
     //check ftp directory
 
@@ -104,7 +105,10 @@ void MainWindow::showUpload(QModelIndex index)
             for(i=0;i<fullFilesList.size();i++)
             {
                 if(!fullFilesList.at(i).contains("/"))
+                {
                     directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
+                    tmpFiles[fullFilesMap[fullFilesList.at(i)].name()] = fullFilesMap[fullFilesList.at(i)].size();
+                }
             }
         }
         else
@@ -115,10 +119,11 @@ void MainWindow::showUpload(QModelIndex index)
                                 (fullFilesList.at(i).count("/") == token.count("/")) && fullFilesList.at(i) != token)
                 {
                     directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
+                    tmpFiles[fullFilesMap[fullFilesList.at(i)].name()] = fullFilesMap[fullFilesList.at(i)].size();
                 }
             }
         }
-        upload->initData(item->text(), directoryFiles);
+        upload->initData(item->text(), directoryFiles, tmpFiles);
         upload->show();
     }
 }
@@ -317,6 +322,7 @@ void MainWindow::refreshTable()
     row = 0;
 
     ui->ftpList->clear();
+    ui->ftpList->setHorizontalHeaderLabels(QStringList() << tr("Directory") << tr("Download") << tr("File") << tr("Subtitle"));
 
     ftp->list();
 }

@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QStringList>
+#include <QMap>
 
 namespace Ui {
 class Upload;
@@ -16,7 +17,7 @@ public:
     explicit Upload(QWidget *parent = 0);
     ~Upload();
 
-    void initData(QString directoryName, QStringList fileList);
+    void initData(QString directoryName, QStringList fileList, QMap<QString, qint64>sizeMap);
     void setProgress(qint64 readBytes, qint64 totalBytes);
 
 private:
@@ -24,6 +25,7 @@ private:
 
     QStringList removeList;
     QStringList uploadList;
+    QMap<QString, qint64> fileSizeMap;
 
     void makePlaylist();
 

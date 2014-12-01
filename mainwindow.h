@@ -43,7 +43,7 @@ private:
 
     int row;
 
-    void refreshTable();
+    //void refreshTable();
     void createActions();
     void createMenus();
     void createTable();
@@ -55,6 +55,7 @@ private:
     void doRemove();
 
 private slots:
+    void refreshTable();
     void showMonitor();
     void showUpload(QModelIndex index);
 
