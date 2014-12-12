@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>180</height>
+    <height>190</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>로그인</string>
+   <string>Login</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <item>
@@ -120,21 +120,21 @@
        <item>
         <widget class="QLabel" name="ipLabel">
          <property name="text">
-          <string>아이피</string>
+          <string>IP</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="idLabel">
          <property name="text">
-          <string>아이디</string>
+          <string>ID</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="pwdLabel">
          <property name="text">
-          <string>패스워드</string>
+          <string>Password</string>
          </property>
         </widget>
        </item>
@@ -162,7 +162,7 @@
         </size>
        </property>
        <property name="text">
-        <string>연결</string>
+        <string>Connect</string>
        </property>
        <property name="iconSize">
         <size>

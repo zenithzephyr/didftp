@@ -57,7 +57,9 @@ void MainWindow::createMenus()
 {
     controlMenu = menuBar()->addMenu(tr("&Control"));
     controlMenu->addAction(refreshAction);
+    controlMenu->addSeparator();
     controlMenu->addAction(controlAction);
+    controlMenu->addAction(upgradeAction);
     controlMenu->addSeparator();
     controlMenu->addAction(exitAction);
 }
@@ -66,6 +68,7 @@ void MainWindow::createActions()
 {
     refreshAction = new QAction(tr("&Refresh"), this);
     controlAction = new QAction(tr("&Control Monitor"), this);
+    upgradeAction = new QAction(tr("&Upgrade Monitor"), this);
     connect(controlAction, SIGNAL(triggered()), this, SLOT(showMonitor()));
 
     exitAction = new QAction(tr("&Exit"), this);

@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>didftp_ko.qm</file>
+        <file>didftp_ko.ts</file>
     </qresource>
 </RCC>

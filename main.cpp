@@ -4,15 +4,16 @@
 
 int main(int argc, char *argv[])
 {
+    Q_INIT_RESOURCE(resource);
+
     QApplication a(argc, argv);
     QTranslator translator;
-
-    MainWindow mainwindow;
 
     bool res = translator.load("didftp_ko");
     qDebug()<<res;
     a.installTranslator(&translator);
-    //mainwindow.show();
+
+    MainWindow mainwindow;
 
     return a.exec();
 }

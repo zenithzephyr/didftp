@@ -30,6 +30,7 @@ private:
 
     QAction *refreshAction;
     QAction *controlAction;
+    QAction *upgradeAction;
     QAction *exitAction;
 
     QMenu *controlMenu;
