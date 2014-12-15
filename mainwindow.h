@@ -56,6 +56,7 @@ private:
     void doRemove();
 
 private slots:
+    void showContextMenu(QPoint point);
     void refreshTable();
     void showMonitor();
     void showUpload(QModelIndex index);

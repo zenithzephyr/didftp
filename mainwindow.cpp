@@ -38,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     login->show();
 
+    ui->ftpList->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(ui->ftpList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
     connect(ui->ftpList, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(showUpload(QModelIndex)));
     connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshTable()));
     row = 0;
@@ -307,6 +310,12 @@ void MainWindow::ftpCommandFinished(int, bool error)
         if(rmList.size())
             doRemove();
     }
+
+    if(ftp->currentCommand() == QFtp::Mkdir)
+            refreshTable();
+
+    if(ftp->currentCommand() == QFtp::Rmdir)
+            refreshTable();
 }
 
 void MainWindow::refreshTable()
@@ -597,4 +606,53 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     }
 
     fullFilesList.sort();
+}
+
+void MainWindow::showContextMenu(QPoint point)
+{
+    QPoint globalPos = this->mapToGlobal(point);
+
+    QModelIndex idx = ui->ftpList->currentIndex();
+    QTableWidgetItem *item = ui->ftpList->item(idx.row(),0);
+    if(item && !item->text().isEmpty())
+    {
+        QMenu menu;
+        QAction	video(tr("Video/Picture(&V)"), this);
+        QAction	subtitle(tr("Subtitle(&S)"), this);
+        QAction	createDir(tr("Create Directory(&C)"), this);
+        QAction deleteDir(tr("Remove Directory(&D)"), this);
+        menu.addAction(&video);
+        menu.addAction(&subtitle);
+        menu.addSeparator();
+        menu.addAction(&createDir);
+        menu.addAction(&deleteDir);
+        QAction *selectedItem = menu.exec(globalPos);
+
+        if(selectedItem == &video) {
+            showUpload(idx);
+        }
+        else if(selectedItem == &subtitle) {
+            //show subtitle
+        }
+        else if(selectedItem == &createDir) {
+            //show dialog
+            //showCreateDir();
+            //ftp->mkdir("hahaha");
+        }
+        else if(selectedItem == &deleteDir) {
+            QMessageBox deleteBox;
+            deleteBox.setWindowTitle(tr("Delete Confirm"));
+            deleteBox.setText(tr("Are you sure to remove this directory?\nIf files in it. All files deleted."));
+            deleteBox.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel);
+            deleteBox.setButtonText(QMessageBox::Yes, tr("Yes"));
+            deleteBox.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+
+            int ret = deleteBox.exec();
+            if(ret == QMessageBox::Yes)
+            {
+                //TODO : delete directory, files
+                //ftp->rmdir("hahaha");
+            }
+        }
+    }
 }
