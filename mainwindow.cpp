@@ -9,6 +9,7 @@
 
 QStringList unparsedDirectory;
 QStringList fullFilesList;
+QStringList fullDirList;
 QStringList playlistPath;
 QStringList upList;
 QStringList rmList;
@@ -459,6 +460,7 @@ void MainWindow::refreshTable()
 {
     unparsedDirectory.clear();
     fullFilesList.clear();
+    fullDirList.clear();
     playlistPath.clear();
     upList.clear();
     rmList.clear();
@@ -545,12 +547,19 @@ void MainWindow::makeTableData()
     int i,j;
     QTableWidgetItem *item = new QTableWidgetItem("/"); //root
     ui->ftpList->setItem(0,0,item);
+    row++;
 
     //debug
-#if 0
+#if 1
     for(i=0;i<fullFilesList.size();i++)
         qDebug() << fullFilesList.at(i);
 #endif
+    //make fullDirList
+    for(i=0;i<fullFilesList.size();i++)
+    {
+        if(fullFilesList.at(i).endsWith("/")) //directory
+            fullDirList << fullFilesList.at(i);
+    }
 
     if(!TimeMap["/"].isEmpty())
     {
@@ -569,47 +578,44 @@ void MainWindow::makeTableData()
     {
         if(!fullFilesList.at(i).contains("/")) //root dir files
         {
-            row++;
             QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
             ui->ftpList->setItem(row,2,item);
+            row++;
         }
     }
 
-    for(i=0;i<fullFilesList.size();i++)
+    //FIXME Here
+    for(i=0;i<fullDirList.size();i++)
     {
-        if(!fullFilesList.at(i).contains("/"))
+        QString dir = fullDirList.at(i);
+        dir.remove(fullDirList.at(i).size()-1,1);
+        QTableWidgetItem *item = new QTableWidgetItem("/"+dir);
+        ui->ftpList->setItem(row,0,item);
+
+        if(!TimeMap[fullDirList.at(i)].isEmpty())
         {
-            row--;
-            continue;
+            QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullDirList.at(i)]);
+            ui->ftpList->setItem(row,1,item2);
         }
 
-        if(fullFilesList.at(i).endsWith("/")) //directory
+        for(j=0;j<4;j++)
         {
-            QString dir = fullFilesList.at(i);
-
-            dir.remove(fullFilesList.at(i).size()-1,1);
-
-            QTableWidgetItem *item = new QTableWidgetItem("/"+dir);
-            //QTableWidgetItem *item = new QTableWidgetItem("/"+fullFilesMap[fullFilesList.at(i)].name());
-
-            ui->ftpList->setItem(i+row+1,0,item);
-            if(!TimeMap[fullFilesList.at(i)].isEmpty())
-            {
-            QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullFilesList.at(i)]);
-            ui->ftpList->setItem(i+row+1,1,item2);
-            }
-
-            for(j=0;j<4;j++)
-            {
-                if(ui->ftpList->item(i+row+1,j) == NULL)
-                    ui->ftpList->setItem(i+row+1,j, new QTableWidgetItem);
-                ui->ftpList->item(i+row+1,j)->setBackground(Qt::gray);
-            }
+            if(ui->ftpList->item(row,j) == NULL)
+                ui->ftpList->setItem(row,j, new QTableWidgetItem);
+            ui->ftpList->item(row,j)->setBackground(Qt::gray);
         }
-        else //files
+        row++;
+
+        for(j=0;j<fullFilesList.size();j++)
         {
-            QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
-            ui->ftpList->setItem(i+row+1,2,item);
+            if(fullFilesList.at(j).contains(fullDirList.at(i))
+                            && !(fullFilesList.at(j) == fullDirList.at(i))
+                            && (fullFilesList.at(j).count("/") == fullDirList.at(i).count("/")))
+            {
+                QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(j)].name());
+                ui->ftpList->setItem(row,2,item);
+                row++;
+            }
         }
     }
 }
@@ -711,7 +717,7 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     pFile->close();
     delete pFile;
 
-    int i, j;
+    int i;
     //FIXME
     QMutableStringListIterator iter(fullFilesList);
 
@@ -719,9 +725,9 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     {
         bool removeFlag = false;
         QString next = iter.next();
-        for(j=0;j<playlistFiles.size();j++)
+        for(i=0;i<playlistFiles.size();i++)
         {
-            if(next.contains(playlistFiles.at(j)) && !next.contains("///"))
+            if(next.contains(playlistFiles.at(i)) && !next.contains("///"))
             {
                 QString addpath = next + "///";
 
