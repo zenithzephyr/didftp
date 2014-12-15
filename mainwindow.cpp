@@ -17,6 +17,11 @@ QString currentPath;
 QMap<QString, QUrlInfo> fullFilesMap;
 QMap<QString, QString> TimeMap;
 QMap<QString, QString> playlistMap;
+QStringList delDirList;
+QStringList delFileList;
+QStringList unparsedDelDir;
+QStringList undeletedList;
+QString deleteRoot;
 
 int num = 0;
 
@@ -34,10 +39,14 @@ MainWindow::MainWindow(QWidget *parent) :
     login = new Login(this);
     monitor = new Monitor(this);
     upload = new Upload(this);
+    createdir = new CreateDir(this);
     ftp = new QFtp();
 
     login->show();
 
+    ui->ftpList->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(ui->ftpList, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
     connect(ui->ftpList, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(showUpload(QModelIndex)));
     connect(refreshAction, SIGNAL(triggered()), this, SLOT(refreshTable()));
     row = 0;
@@ -88,7 +97,7 @@ void MainWindow::showMonitor()
 
 void MainWindow::showUpload(QModelIndex index)
 {
-    qDebug()<<index;
+    //qDebug()<<index;
     QMap<QString, qint64> tmpFiles;
 
     //check ftp directory
@@ -102,7 +111,7 @@ void MainWindow::showUpload(QModelIndex index)
 
         token.remove(0,1);
         token.append(QChar('/'));
-        qDebug()<<token;
+        //qDebug()<<token;
         if(index.row() == 0) //root dir
         {
             for(i=0;i<fullFilesList.size();i++)
@@ -147,46 +156,61 @@ void MainWindow::createTable()
 
 void MainWindow::addToList(QUrlInfo url)
 {
-    qDebug()<<url.name();
-
-    if(url.isDir() && !url.isSymLink())
+    if(ftpmode == DELETEDIR)
     {
+        if(url.isDir() && !url.isSymLink()) //directory
+        {
+            unparsedDelDir << currentDirectory + "/" + url.name();
+            delDirList << currentDirectory + "/" + url.name();
+        }
+        else //file
+        {
+            delFileList << currentDirectory + "/" + url.name();
+        }
+    }
+    else //NORMAL
+    {
+        //qDebug()<<url.name();
+
+        if(url.isDir() && !url.isSymLink()) //directory
+        {
+            if(currentDirectory.isEmpty()) //root directory
+                unparsedDirectory << url.name();
+            else
+                unparsedDirectory << currentDirectory + "/" + url.name();
+        }
+
         if(currentDirectory.isEmpty())
-            unparsedDirectory << url.name();
-        else
-            unparsedDirectory << currentDirectory + "/" + url.name();
-    }
-
-    if(currentDirectory.isEmpty())
-    {
-        if(url.isDir() && !url.isSymLink())
         {
-            fullFilesList << url.name() + "/";
-            fullFilesMap[url.name() + "/"] = url;
+            if(url.isDir() && !url.isSymLink())
+            {
+                fullFilesList << url.name() + "/";
+                fullFilesMap[url.name() + "/"] = url;
+            }
+            else
+            {
+                if(url.name() == "playlist.txt")
+                    playlistPath << "/";
+
+                fullFilesList << url.name();
+                fullFilesMap[url.name()] = url;
+            }
         }
         else
         {
-            if(url.name() == "playlist.txt")
-                playlistPath << "/";
+            if(url.isDir() && !url.isSymLink())
+            {
+                fullFilesList << currentDirectory + "/" + url.name() + "/";
+                fullFilesMap[currentDirectory + "/" + url.name() + "/"] = url;
+            }
+            else
+            {
+                if(url.name() == "playlist.txt")
+                    playlistPath << currentDirectory + "/";
 
-            fullFilesList << url.name();
-            fullFilesMap[url.name()] = url;
-        }
-    }
-    else
-    {
-        if(url.isDir() && !url.isSymLink())
-        {
-            fullFilesList << currentDirectory + "/" + url.name() + "/";
-            fullFilesMap[currentDirectory + "/" + url.name() + "/"] = url;
-        }
-        else
-        {
-            if(url.name() == "playlist.txt")
-                playlistPath << currentDirectory + "/";
-
-            fullFilesList << currentDirectory + "/" + url.name();
-            fullFilesMap[currentDirectory + "/" + url.name()] = url;
+                fullFilesList << currentDirectory + "/" + url.name();
+                fullFilesMap[currentDirectory + "/" + url.name()] = url;
+            }
         }
     }
 }
@@ -234,6 +258,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
             return;
         }
 
+        ftpmode = NORMAL;
         ftp->list(); //get all list
         currentDirectory = "";
 
@@ -245,21 +270,88 @@ void MainWindow::ftpCommandFinished(int, bool error)
 
     if (ftp->currentCommand() == QFtp::List) //Recrusive
     {
-        if(unparsedDirectory.size())
+        if(ftpmode == DELETEDIR)
         {
-            ftp->list(unparsedDirectory.at(0));
-            currentDirectory = unparsedDirectory.at(0);
-            unparsedDirectory.removeFirst();
+            //TODO : Delete Mode
+            if(unparsedDelDir.size())
+            {
+                ftpmode = DELETEDIR;
+                ftp->list(unparsedDelDir.at(0));
+                currentDirectory = unparsedDelDir.at(0);
+                unparsedDelDir.removeFirst();
+            }
+            else
+            {
+                int i,j;
+                delDirList.sort();
+                delFileList.sort();
+
+                if(delDirList.size())
+                {
+                    for(i=delDirList.size()-1;i>=0;i--)
+                    {
+                        for(j=delFileList.size()-1;j>=0;j--)
+                        {
+                            if(delFileList.at(j).contains(delDirList.at(i)))
+                                undeletedList << delFileList.at(j);
+                        }
+                        undeletedList << delDirList.at(i) + "/";
+                    }
+
+                }
+
+                for(i=delFileList.size()-1;i>=0;i--)
+                {
+                    undeletedList << delFileList.at(i);
+                }
+
+                undeletedList << deleteRoot + "/";
+
+#if 0
+                for(i=0;i<delDirList.size();i++)
+                    qDebug() << delDirList.at(i);
+                for(i=0;i<delFileList.size();i++)
+                    qDebug() << delFileList.at(i);
+#endif
+                for(i=0;i<undeletedList.size();i++)
+                    qDebug() << undeletedList.at(i);
+
+
+                QString dir = undeletedList.at(0);
+                dir.remove(undeletedList.at(0).size()-1,1);
+                if(undeletedList.at(0).endsWith("/")) //directory
+                {
+                    qDebug()<<"DEL DIR "<< dir;
+                    ftp->rmdir(dir);
+                }
+                else
+                {
+                    qDebug()<<"DEL FILE "<<undeletedList.at(0);
+                    ftp->remove(undeletedList.at(0));
+                }
+
+                undeletedList.removeFirst();
+            }
         }
         else
         {
-            fullFilesList.sort();
+            if(unparsedDirectory.size())
+            {
+                ftpmode = NORMAL;
+                ftp->list(unparsedDirectory.at(0));
+                currentDirectory = unparsedDirectory.at(0);
+                unparsedDirectory.removeFirst();
+            }
+            else
+            {
+                fullFilesList.sort();
 #if 0
-            int i;
-            for(i=0;i<fullFilesList.size();i++)
-                qDebug()<<"[ " + fullFilesList.at(i) + " ]";
+                int i;
+                for(i=0;i<fullFilesList.size();i++)
+                    qDebug()<<"[ " + fullFilesList.at(i) + " ]";
 #endif
-            getPlaylist();
+                getPlaylist();
+            }
         }
     }
 
@@ -284,7 +376,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
 
     if(ftp->currentCommand() == QFtp::Put)
     {
-        qDebug()<<"PUT END";
+        //qDebug()<<"PUT END";
 
         file->close();
         delete file;
@@ -302,10 +394,64 @@ void MainWindow::ftpCommandFinished(int, bool error)
 
     if(ftp->currentCommand() == QFtp::Remove)
     {
-        qDebug()<<"DELETE END";
+        //qDebug()<<"DELETE END";
+        if(ftpmode == DELETEDIR)
+        {
+            if(undeletedList.size())
+            {
+                QString dir = undeletedList.at(0);
+                dir.remove(undeletedList.at(0).size()-1,1);
+                if(undeletedList.at(0).endsWith("/")) //directory
+                {
+                    ftp->rmdir(dir);
+                }
+                else
+                {
+                    ftp->remove(undeletedList.at(0));
+                }
 
-        if(rmList.size())
-            doRemove();
+                undeletedList.removeFirst();
+            }
+            else
+            {
+                refreshTable();
+            }
+        }
+        else
+        {
+            if(rmList.size())
+                doRemove();
+        }
+    }
+
+    if(ftp->currentCommand() == QFtp::Mkdir)
+            refreshTable();
+
+    if(ftp->currentCommand() == QFtp::Rmdir)
+    {
+        if(ftpmode == DELETEDIR)
+        {
+            if(undeletedList.size())
+            {
+                QString dir = undeletedList.at(0);
+                dir.remove(undeletedList.at(0).size()-1,1);
+                if(undeletedList.at(0).endsWith("/")) //directory
+                {
+                    ftp->rmdir(dir);
+                }
+                else
+                {
+                    ftp->remove(undeletedList.at(0));
+                }
+
+                undeletedList.removeFirst();
+            }
+            else
+            {
+                refreshTable();
+            }
+
+        }
     }
 }
 
@@ -324,9 +470,16 @@ void MainWindow::refreshTable()
     num = 0;
     row = 0;
 
+    delDirList.clear();
+    delFileList.clear();
+    unparsedDelDir.clear();
+    undeletedList.clear();
+    deleteRoot="";
+
     ui->ftpList->clear();
     ui->ftpList->setHorizontalHeaderLabels(QStringList() << tr("Directory") << tr("Download") << tr("File") << tr("Subtitle"));
 
+    ftpmode = NORMAL;
     ftp->list();
 }
 
@@ -341,7 +494,6 @@ void MainWindow::updateDataTransferProgress(qint64 readBytes,
 void MainWindow::removeFiles(QString path, QStringList removeList)
 {
     int i;
-    qDebug()<<"removeFiles";
 
     for(i=0;i<removeList.size();i++)
         rmList << removeList.at(i);
@@ -354,6 +506,7 @@ void MainWindow::removeFiles(QString path, QStringList removeList)
 
 void MainWindow::doRemove()
 {
+    ftpmode = DELETEFILE;
     ftp->remove(currentPath+"/"+rmList.at(0));
 
     rmList.removeFirst();
@@ -361,8 +514,6 @@ void MainWindow::doRemove()
 
 void MainWindow::uploadFiles(QString path, QStringList uploadList)
 {
-    qDebug()<<"uploadFiles";
-
     int i;
     for(i=0;i<uploadList.size();i++)
         upList << uploadList.at(i);
@@ -395,6 +546,12 @@ void MainWindow::makeTableData()
     QTableWidgetItem *item = new QTableWidgetItem("/"); //root
     ui->ftpList->setItem(0,0,item);
 
+    //debug
+#if 0
+    for(i=0;i<fullFilesList.size();i++)
+        qDebug() << fullFilesList.at(i);
+#endif
+
     if(!TimeMap["/"].isEmpty())
     {
         QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap["/"]);
@@ -410,7 +567,7 @@ void MainWindow::makeTableData()
 
     for(i=0;i<fullFilesList.size();i++)
     {
-        if(!fullFilesList.at(i).contains("/"))
+        if(!fullFilesList.at(i).contains("/")) //root dir files
         {
             row++;
             QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
@@ -428,7 +585,12 @@ void MainWindow::makeTableData()
 
         if(fullFilesList.at(i).endsWith("/")) //directory
         {
-            QTableWidgetItem *item = new QTableWidgetItem("/"+fullFilesMap[fullFilesList.at(i)].name());
+            QString dir = fullFilesList.at(i);
+
+            dir.remove(fullFilesList.at(i).size()-1,1);
+
+            QTableWidgetItem *item = new QTableWidgetItem("/"+dir);
+            //QTableWidgetItem *item = new QTableWidgetItem("/"+fullFilesMap[fullFilesList.at(i)].name());
 
             ui->ftpList->setItem(i+row+1,0,item);
             if(!TimeMap[fullFilesList.at(i)].isEmpty())
@@ -478,7 +640,7 @@ void MainWindow::getPlaylist()
         QMapIterator<QString, QString> i(playlistMap);
         while(i.hasNext()) {
             i.next();
-            qDebug()<< i.key() << ": " << i.value() << endl;
+            //qDebug()<< i.key() << ": " << i.value() << endl;
             manipulateData(i.key(), i.value()); //key : ftp playlistPath, value : downloaded playlist.txt fileName
         }
 
@@ -541,7 +703,7 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
             //cut string
             QStringList clist = line.split(",");
             playlistFiles << clist.at(0);
-            qDebug()<<"File : " << clist.at(0);
+            //qDebug()<<"File : " << clist.at(0);
         }
     } while(!line.isNull());
 
@@ -568,13 +730,13 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
             }
         }
 
-        qDebug() << "PATH : " << path;
+        //qDebug() << "PATH : " << path;
         if(path == "/" && next.count("/") == 0)
             removeFlag = true;
 
         if(next.startsWith(path) && (next.count("/") == path.count("/")) && next != path)
         {
-            qDebug() << "DELETED : " << next;
+         //   qDebug() << "DELETED : " << next;
             removeFlag = true;
         }
 
@@ -597,4 +759,68 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     }
 
     fullFilesList.sort();
+}
+
+void MainWindow::showContextMenu(QPoint point)
+{
+    QPoint globalPos = this->mapToGlobal(point);
+
+    QModelIndex idx = ui->ftpList->currentIndex();
+    QTableWidgetItem *item = ui->ftpList->item(idx.row(),0);
+    if(item && !item->text().isEmpty())
+    {
+        QMenu menu;
+        QAction	video(tr("Video/Picture(&V)"), this);
+        QAction	subtitle(tr("Subtitle(&S)"), this);
+        QAction	createDir(tr("Create Directory(&C)"), this);
+        QAction deleteDir(tr("Remove Directory(&D)"), this);
+        menu.addAction(&video);
+        menu.addAction(&subtitle);
+        menu.addSeparator();
+        menu.addAction(&createDir);
+        menu.addAction(&deleteDir);
+        if(idx.row() == 0)
+            deleteDir.setDisabled(true);
+        QAction *selectedItem = menu.exec(globalPos);
+
+        if(selectedItem == &video) {
+            showUpload(idx);
+        }
+        else if(selectedItem == &subtitle) {
+            //show subtitle
+        }
+        else if(selectedItem == &createDir) {
+            showCreateDir(item->text());
+        }
+        else if(selectedItem == &deleteDir) {
+            QMessageBox deleteBox;
+            deleteBox.setWindowTitle(tr("Delete Confirm"));
+            deleteBox.setText(tr("Are you sure to remove this(%1) directory?\nIf files in it. All files deleted.").arg(item->text()));
+            deleteBox.setStandardButtons(QMessageBox::Yes|QMessageBox::Cancel);
+            deleteBox.setButtonText(QMessageBox::Yes, tr("Yes"));
+            deleteBox.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+
+            int ret = deleteBox.exec();
+            if(ret == QMessageBox::Yes)
+            {
+                //TODO : delete directory, files
+                qDebug() << item->text();
+                ftpmode = DELETEDIR;
+                deleteRoot = currentDirectory = (item->text());
+                ftp->list(item->text());
+                //ftp->rmdir(item->text());
+            }
+        }
+    }
+}
+
+void MainWindow::showCreateDir(QString currentDir)
+{
+    createdir->initData(currentDir);
+    createdir->show();
+}
+
+void MainWindow::doCreateDir(QString dir)
+{
+    ftp->mkdir(dir);
 }

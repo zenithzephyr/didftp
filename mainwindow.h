@@ -12,6 +12,7 @@
 #include "login.h"
 #include "upload.h"
 #include "monitor.h"
+#include "createdir.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,6 +25,12 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+    enum FtpMode {
+        NORMAL,
+        DELETEDIR,
+        DELETEFILE
+    };
 
 private:
     Ui::MainWindow *ui;
@@ -40,8 +47,10 @@ private:
 
     Login *login;
     Upload *upload;
+    CreateDir *createdir;
     Monitor *monitor;
 
+    int ftpmode;
     int row;
 
     //void refreshTable();
@@ -54,11 +63,14 @@ private:
     void manipulateData(const QString &path, const QString &fileName);
     void doUpload();
     void doRemove();
+    void showCreateDir(QString currentDir);
 
 private slots:
+    void showContextMenu(QPoint point);
     void refreshTable();
     void showMonitor();
     void showUpload(QModelIndex index);
+    void doCreateDir(QString dir);
 
     void addToList(QUrlInfo url);
     void connectFtp(QString ip, QString id, QString pwd);
