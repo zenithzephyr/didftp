@@ -15,8 +15,15 @@ public:
     explicit CreateDir(QWidget *parent = 0);
     ~CreateDir();
 
+    void initData(QString &currentDir);
 private:
     Ui::CreateDir *ui;
+
+private slots:
+    void createClicked();
+
+signals:
+    void createNewDir(QString);
 };
 
 #endif // CREATEDIR_H
