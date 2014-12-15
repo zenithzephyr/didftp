@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     monitor.cpp \
     qftp.cpp \
     qurlinfo.cpp \
-    createdir.cpp
+    createdir.cpp \
+    subtitle.cpp
 
 HEADERS  += login.h \
     mainwindow.h \
@@ -27,13 +28,15 @@ HEADERS  += login.h \
     monitor.h \
     qftp.h \
     qurlinfo.h \
-    createdir.h
+    createdir.h \
+    subtitle.h
 
 FORMS    += login.ui \
     mainwindow.ui \
     upload.ui \
     monitor.ui \
-    createdir.ui
+    createdir.ui \
+    subtitle.ui
 
 RESOURCES += \
     resource.qrc

@@ -1,8 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "monitor.h"
-#include "upload.h"
-#include "login.h"
 
 #include <QMessageBox>
 #include <QFileInfo>
@@ -41,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     monitor = new Monitor(this);
     upload = new Upload(this);
     createdir = new CreateDir(this);
+    subtitle = new Subtitle(this);
     ftp = new QFtp();
 
     login->show();
@@ -273,7 +271,6 @@ void MainWindow::ftpCommandFinished(int, bool error)
     {
         if(ftpmode == DELETEDIR)
         {
-            //TODO : Delete Mode
             if(unparsedDelDir.size())
             {
                 ftpmode = DELETEDIR;
@@ -776,29 +773,30 @@ void MainWindow::showContextMenu(QPoint point)
     if(item && !item->text().isEmpty())
     {
         QMenu menu;
-        QAction	video(tr("Video/Picture(&V)"), this);
-        QAction	subtitle(tr("Subtitle(&S)"), this);
-        QAction	createDir(tr("Create Directory(&C)"), this);
-        QAction deleteDir(tr("Remove Directory(&D)"), this);
-        menu.addAction(&video);
-        menu.addAction(&subtitle);
+        QAction	videoAction(tr("Video/Picture(&V)"), this);
+        QAction	subtitleAction(tr("Subtitle(&S)"), this);
+        QAction	createDirAction(tr("Create Directory(&C)"), this);
+        QAction deleteDirAction(tr("Remove Directory(&D)"), this);
+        menu.addAction(&videoAction);
+        menu.addAction(&subtitleAction);
         menu.addSeparator();
-        menu.addAction(&createDir);
-        menu.addAction(&deleteDir);
+        menu.addAction(&createDirAction);
+        menu.addAction(&deleteDirAction);
         if(idx.row() == 0)
-            deleteDir.setDisabled(true);
+            deleteDirAction.setDisabled(true);
         QAction *selectedItem = menu.exec(globalPos);
 
-        if(selectedItem == &video) {
+        if(selectedItem == &videoAction) {
             showUpload(idx);
         }
-        else if(selectedItem == &subtitle) {
-            //show subtitle
+        else if(selectedItem == &subtitleAction) {
+            //TODO : show subtitle
+            subtitle->show();
         }
-        else if(selectedItem == &createDir) {
+        else if(selectedItem == &createDirAction) {
             showCreateDir(item->text());
         }
-        else if(selectedItem == &deleteDir) {
+        else if(selectedItem == &deleteDirAction) {
             QMessageBox deleteBox;
             deleteBox.setWindowTitle(tr("Delete Confirm"));
             deleteBox.setText(tr("Are you sure to remove this(%1) directory?\nIf files in it. All files deleted.").arg(item->text()));
@@ -809,7 +807,6 @@ void MainWindow::showContextMenu(QPoint point)
             int ret = deleteBox.exec();
             if(ret == QMessageBox::Yes)
             {
-                //TODO : delete directory, files
                 qDebug() << item->text();
                 ftpmode = DELETEDIR;
                 deleteRoot = currentDirectory = (item->text());

@@ -1,11 +1,18 @@
 #include "createdir.h"
 #include "ui_createdir.h"
 
+#include <QPushButton>
+
 CreateDir::CreateDir(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::CreateDir)
 {
     ui->setupUi(this);
+
+    QPushButton *okButton = ui->buttonBox->button(QDialogButtonBox::Ok);
+    okButton->setText(tr("Yes"));
+    QPushButton *cancelButton = ui->buttonBox->button(QDialogButtonBox::Cancel);
+    cancelButton->setText(tr("Cancel"));
 
     connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(createClicked()));
     connect(this, SIGNAL(createNewDir(QString)), parentWidget(), SLOT(doCreateDir(QString)));

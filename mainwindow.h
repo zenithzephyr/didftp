@@ -13,6 +13,7 @@
 #include "upload.h"
 #include "monitor.h"
 #include "createdir.h"
+#include "subtitle.h"
 
 namespace Ui {
 class MainWindow;
@@ -49,6 +50,7 @@ private:
     Upload *upload;
     CreateDir *createdir;
     Monitor *monitor;
+    Subtitle *subtitle;
 
     int ftpmode;
     int row;
