@@ -15,8 +15,18 @@ public:
     explicit Subtitle(QWidget *parent = 0);
     ~Subtitle();
 
+    void initData(QString subtext, QString path);
+
 private:
     Ui::Subtitle *ui;
+
+    void makeSubtitle();
+
+private slots:
+    void transmitClicked();
+
+signals:
+    void uploadSubtitle(QString);
 };
 
 #endif // SUBTITLE_H

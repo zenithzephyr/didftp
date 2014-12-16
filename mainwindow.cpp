@@ -3,18 +3,23 @@
 
 #include <QMessageBox>
 #include <QFileInfo>
+#include <QTextCodec>
+#include <QTextDecoder>
 
 QStringList unparsedDirectory;
 QStringList fullFilesList;
 QStringList fullDirList;
 QStringList playlistPath;
+QStringList subtitlePath;
 QStringList upList;
 QStringList rmList;
 QString currentDirectory("");
 QString currentPath;
 QMap<QString, QUrlInfo> fullFilesMap;
 QMap<QString, QString> TimeMap;
+QMap<QString, QString> SubTimeMap;
 QMap<QString, QString> playlistMap;
+QMap<QString, QString> subtitleMap;
 QStringList delDirList;
 QStringList delFileList;
 QStringList unparsedDelDir;
@@ -94,7 +99,7 @@ void MainWindow::showMonitor()
     monitor->show();
 }
 
-void MainWindow::showUpload(QModelIndex index)
+void MainWindow::showUpload(QModelIndex index) //FIXME : my name
 {
     //qDebug()<<index;
     QMap<QString, qint64> tmpFiles;
@@ -104,6 +109,14 @@ void MainWindow::showUpload(QModelIndex index)
     QTableWidgetItem *item = ui->ftpList->item(index.row(),0);
     if(item && !item->text().isEmpty())
     {
+        if(index.column() == 3) //subtitle
+        {
+            QTableWidgetItem *subitem = ui->ftpList->item(index.row(),3);
+            subtitle->initData(subitem->text(),item->text());
+            subtitle->show();
+        }
+        else
+        {
         int i;
         QStringList directoryFiles;
         QString token = item->text();
@@ -136,6 +149,7 @@ void MainWindow::showUpload(QModelIndex index)
         }
         upload->initData(item->text(), directoryFiles, tmpFiles);
         upload->show();
+        }
     }
 }
 
@@ -190,6 +204,8 @@ void MainWindow::addToList(QUrlInfo url)
             {
                 if(url.name() == "playlist.txt")
                     playlistPath << "/";
+                else if(url.name() == "subtitle.txt")
+                    subtitlePath << "/";
 
                 fullFilesList << url.name();
                 fullFilesMap[url.name()] = url;
@@ -206,6 +222,8 @@ void MainWindow::addToList(QUrlInfo url)
             {
                 if(url.name() == "playlist.txt")
                     playlistPath << currentDirectory + "/";
+                else if(url.name() == "subtitle.txt")
+                    subtitlePath << currentDirectory + "/";
 
                 fullFilesList << currentDirectory + "/" + url.name();
                 fullFilesMap[currentDirectory + "/" + url.name()] = url;
@@ -369,7 +387,10 @@ void MainWindow::ftpCommandFinished(int, bool error)
         //     progressDialog->hide();
 
         //TODO Check if(playlist downloading?)
-        getPlaylist();
+        if(ftpmode == GETPLAY)
+            getPlaylist();
+        else if(ftpmode == GETSUB)
+            getSubtitle();
     }
 
     if(ftp->currentCommand() == QFtp::Put)
@@ -379,6 +400,13 @@ void MainWindow::ftpCommandFinished(int, bool error)
         file->close();
         delete file;
 
+        if(ftpmode == SUBTITLE)
+        {
+            refreshTable(); //FIXME
+            subtitle->close();
+        }
+        else
+        {
         if(upList.size())
         {
             doUpload();
@@ -387,6 +415,7 @@ void MainWindow::ftpCommandFinished(int, bool error)
         {
             refreshTable(); //FIXME
             upload->close();
+        }
         }
     }
 
@@ -459,13 +488,16 @@ void MainWindow::refreshTable()
     fullFilesList.clear();
     fullDirList.clear();
     playlistPath.clear();
+    subtitlePath.clear();
     upList.clear();
     rmList.clear();
     currentDirectory="";
     currentPath.clear();
     fullFilesMap.clear();
     TimeMap.clear();
+    SubTimeMap.clear();
     playlistMap.clear();
+    subtitleMap.clear();
     num = 0;
     row = 0;
 
@@ -534,9 +566,25 @@ void MainWindow::doUpload()
         delete file;
     }
 
+    ftpmode = UPLOAD;
     ftp->put(file, currentPath+"/"+QFileInfo(file->fileName()).fileName());
 
     upList.removeFirst();
+}
+
+void MainWindow::uploadSubtitle(QString path)
+{
+    file = new QFile("subtitle.txt");
+
+    if (!file->open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("FTP"),
+                                 tr("Unable to read the file %1: %2.")
+                                 .arg(file->fileName()).arg(file->errorString()));
+        delete file;
+    }
+
+    ftpmode = SUBTITLE;
+    ftp->put(file, path + "/"+QFileInfo(file->fileName()).fileName());
 }
 
 void MainWindow::makeTableData()
@@ -558,10 +606,27 @@ void MainWindow::makeTableData()
             fullDirList << fullFilesList.at(i);
     }
 
+    int hasSubTime  = 0;
+
+    if(!SubTimeMap["/"].isEmpty())
+    {
+        QTableWidgetItem *item2 = new QTableWidgetItem(SubTimeMap["/"]);
+        ui->ftpList->setItem(0,1,item2);
+
+        hasSubTime = 1;
+    }
+
     if(!TimeMap["/"].isEmpty())
     {
         QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap["/"]);
-        ui->ftpList->setItem(0,1,item2);
+        ui->ftpList->setItem(hasSubTime,1,item2);
+    }
+
+    if(!subtitleMap["/"].isEmpty())
+    {
+        QString sub = getSubText("/",subtitleMap["/"]);
+        QTableWidgetItem *item3 = new QTableWidgetItem(sub);
+        ui->ftpList->setItem(0,3,item3);
     }
 
     for(i=0;i<4;i++)
@@ -581,7 +646,6 @@ void MainWindow::makeTableData()
         }
     }
 
-    //FIXME Here
     for(i=0;i<fullDirList.size();i++)
     {
         QString dir = fullDirList.at(i);
@@ -589,11 +653,27 @@ void MainWindow::makeTableData()
         QTableWidgetItem *item = new QTableWidgetItem("/"+dir);
         ui->ftpList->setItem(row,0,item);
 
+    if(!subtitleMap[fullDirList.at(i)].isEmpty())
+    {
+        QString sub = getSubText(fullDirList.at(i), subtitleMap[fullDirList.at(i)]);
+        QTableWidgetItem *item3 = new QTableWidgetItem(sub);
+        ui->ftpList->setItem(row,3,item3);
+    }
+
+        hasSubTime = 0;
+        if(!SubTimeMap[fullDirList.at(i)].isEmpty())
+        {
+            QTableWidgetItem *item2 = new QTableWidgetItem(SubTimeMap[fullDirList.at(i)]);
+            ui->ftpList->setItem(row,1,item2);
+            hasSubTime = 1;
+        }
+
         if(!TimeMap[fullDirList.at(i)].isEmpty())
         {
             QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullDirList.at(i)]);
-            ui->ftpList->setItem(row,1,item2);
+            ui->ftpList->setItem(row+hasSubTime,1,item2);
         }
+
 
         for(j=0;j<4;j++)
         {
@@ -633,10 +713,99 @@ void MainWindow::getPlaylist()
             delete file;
         }
 
+        ftpmode = GETPLAY;
         ftp->get(playlistPath.at(0) + "/playlist.txt",file);
 
         playlistMap[playlistPath.at(0)] = fileName;
         playlistPath.removeFirst();
+    }
+    else
+    {
+        getSubtitle();
+    }
+}
+
+QString MainWindow::getSubText(QString path, QString fileName)
+{
+    QTextCodec *codec = QTextCodec::codecForName("eucKR");
+    QTextDecoder *decoder = codec->makeDecoder();
+
+    QFile *pFile = new QFile(fileName);
+
+    if (!pFile->open(QIODevice::ReadOnly)) {
+        QMessageBox::information(this, tr("FTP"),
+                                 tr("Unable to save the file %1: %2.")
+                                 .arg(fileName).arg(file->errorString()));
+        delete file;
+    }
+
+    QTextStream in(pFile);
+    QString line;
+    QByteArray plainText;
+
+    do {
+        line = in.readLine();
+
+        if(line.startsWith("[ver:"))
+        {
+            //version parsing
+        }
+        else if(line.startsWith("[send:"))
+        {
+            //time parsing
+            QStringList token = line.split(":");
+
+            QString clist = token.at(1);
+            QDateTime dtime;
+
+            clist.remove(clist.size()-1,1);
+            dtime.setTime_t(clist.toInt());
+            SubTimeMap[path] =dtime.toString("yyyy/MM/dd hh:mm:ss");
+        }
+        else if(line.startsWith("[run:"))
+        {
+            //? not implemented
+        }
+        else if(line.startsWith("[end]"))
+        {
+            //end tag
+        }
+        else if(!line.isEmpty())
+        {
+            plainText.append(line);
+        }
+    } while(!line.isNull());
+
+
+    pFile->close();
+    delete pFile;
+
+   // QString euckrText = codec->toUnicode(plainText); //FIXME
+    qDebug() << plainText;
+  //  qDebug() << euckrText;
+    return plainText;
+}
+
+void MainWindow::getSubtitle() //chain reaction
+{
+    num++; //FIXME
+    if(subtitlePath.size())
+    {
+        QString fileName = QString("subtitle%1.txt").arg(num); //FIXME filename : filename must can found.
+        file = new QFile(fileName);
+
+        if (!file->open(QIODevice::WriteOnly)) {
+            QMessageBox::information(this, tr("FTP"),
+                                     tr("Unable to write the file %1: %2.")
+                                     .arg(fileName).arg(file->errorString()));
+            delete file;
+        }
+
+        ftpmode = GETSUB;
+        ftp->get(subtitlePath.at(0) + "/subtitle.txt",file);
+
+        subtitleMap[subtitlePath.at(0)] = fileName;
+        subtitlePath.removeFirst();
     }
     else
     {
@@ -652,6 +821,7 @@ void MainWindow::getPlaylist()
         //manipulateData (delete playlist.txt and other files if playlist.txt directory)
         makeTableData();
     }
+
 }
 
 void MainWindow::manipulateData(const QString &path, const QString &fileName)
@@ -790,7 +960,8 @@ void MainWindow::showContextMenu(QPoint point)
             showUpload(idx);
         }
         else if(selectedItem == &subtitleAction) {
-            //TODO : show subtitle
+            QTableWidgetItem *subitem = ui->ftpList->item(idx.row(),3);
+            subtitle->initData(subitem->text(),item->text());
             subtitle->show();
         }
         else if(selectedItem == &createDirAction) {

@@ -30,7 +30,11 @@ public:
     enum FtpMode {
         NORMAL,
         DELETEDIR,
-        DELETEFILE
+        DELETEFILE,
+        SUBTITLE,
+        UPLOAD,
+        GETPLAY,
+        GETSUB
     };
 
 private:
@@ -62,6 +66,8 @@ private:
     void updateStatusBar();
     void makeTableData();
     void getPlaylist();
+    void getSubtitle();
+    QString getSubText(QString path, QString fileName);
     void manipulateData(const QString &path, const QString &fileName);
     void doUpload();
     void doRemove();
@@ -80,6 +86,7 @@ private slots:
     void ftpCommandFinished(int, bool error);
     void removeFiles(QString path, QStringList removeList);
     void uploadFiles(QString path, QStringList uploadList);
+    void uploadSubtitle(QString path);
 };
 
 #endif // MAINWINDOW_H
