@@ -727,9 +727,6 @@ void MainWindow::getPlaylist()
 
 QString MainWindow::getSubText(QString path, QString fileName)
 {
-    QTextCodec *codec = QTextCodec::codecForName("eucKR");
-    QTextDecoder *decoder = codec->makeDecoder();
-
     QFile *pFile = new QFile(fileName);
 
     if (!pFile->open(QIODevice::ReadOnly)) {
@@ -741,7 +738,9 @@ QString MainWindow::getSubText(QString path, QString fileName)
 
     QTextStream in(pFile);
     QString line;
-    QByteArray plainText;
+    QString plainText;
+
+    in.setCodec(QTextCodec::codecForName("eucKR"));
 
     do {
         line = in.readLine();
@@ -780,9 +779,6 @@ QString MainWindow::getSubText(QString path, QString fileName)
     pFile->close();
     delete pFile;
 
-   // QString euckrText = codec->toUnicode(plainText); //FIXME
-    qDebug() << plainText;
-  //  qDebug() << euckrText;
     return plainText;
 }
 

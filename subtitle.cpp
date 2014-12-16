@@ -24,7 +24,6 @@ Subtitle::~Subtitle()
 
 void Subtitle::makeSubtitle()
 {
-    QTextCodec *codec = QTextCodec::codecForName("eucKR");
     QFile file("subtitle.txt");
     if(!file.open(QIODevice::WriteOnly|QIODevice::Text))
         QMessageBox::information(this, tr("FTP"),
@@ -32,11 +31,11 @@ void Subtitle::makeSubtitle()
                                  .arg(file.fileName()).arg(file.errorString()));
     QTextStream out(&file);
     QDateTime now = QDateTime::currentDateTime();
+    out.setCodec(QTextCodec::codecForName("eucKR"));
 
     out << "[ver:1]\r\n";
     out << "[send:" + QString::number(now.toTime_t()) + "]\r\n";
-    out << ui->subtitleEdit->toPlainText(); //FIXME : euc-kr
-    //out << codec->toUnicode(ui->subtitleEdit->toPlainText()); //FIXME : euc-kr
+    out << ui->subtitleEdit->toPlainText();
     file.close();
 }
 
