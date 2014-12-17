@@ -34,7 +34,8 @@ public:
         SUBTITLE,
         UPLOAD,
         GETPLAY,
-        GETSUB
+        GETSUB,
+        HEARTBEAT
     };
 
 private:
