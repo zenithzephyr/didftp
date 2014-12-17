@@ -1068,3 +1068,9 @@ void MainWindow::doCreateDir(QString dir)
 {
     ftp->mkdir(dir);
 }
+
+void MainWindow::refreshMonitor()
+{
+    ftpmode = HEARTBEAT;
+    ftp->list("{heartbeat}");
+}

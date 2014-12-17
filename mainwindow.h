@@ -77,6 +77,7 @@ private:
 private slots:
     void showContextMenu(QPoint point);
     void refreshTable();
+    void refreshMonitor();
     void showMonitor();
     void showUpload(QModelIndex index);
     void doCreateDir(QString dir);

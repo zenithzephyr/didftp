@@ -16,6 +16,12 @@ Monitor::Monitor(QWidget *parent) :
     ui->setupUi(this);
 
     createTable();
+
+    timer = new QTimer(this);
+    connect(timer, SIGNAL(timeout()), this, SLOT(onTimer()));
+    connect(this, SIGNAL(refreshMonitor()), parentWidget(), SLOT(refreshMonitor()));
+
+    timer->start(60000);
 }
 
 Monitor::~Monitor()
@@ -121,4 +127,13 @@ void Monitor::initData(QStringList monitorList)
     }
 
     show();
+}
+
+void Monitor::onTimer()
+{
+    if(this->isEnabled())
+    {
+        qDebug() <<"TIMER";
+        emit refreshMonitor();
+    }
 }

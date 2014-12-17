@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QStringList>
+#include <QTimer>
 
 namespace Ui {
 class Monitor;
@@ -23,6 +24,12 @@ private:
 
     void createTable();
 
+    QTimer *timer;
+private slots:
+    void onTimer();
+
+signals:
+    void refreshMonitor();
 };
 
 #endif // MONITOR_H
