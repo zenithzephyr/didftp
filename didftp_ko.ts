@@ -75,127 +75,137 @@
         <translation>전체목록</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="66"/>
+        <location filename="mainwindow.cpp" line="73"/>
         <source>&amp;Control</source>
         <translation>관리메뉴(&amp;Z)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="77"/>
+        <location filename="mainwindow.cpp" line="84"/>
         <source>&amp;Refresh</source>
         <translation>새로고침(&amp;X)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="78"/>
+        <location filename="mainwindow.cpp" line="85"/>
         <source>&amp;Control Monitor</source>
         <translation>모니터 감시(&amp;Y)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="79"/>
+        <location filename="mainwindow.cpp" line="86"/>
         <source>&amp;Upgrade Monitor</source>
         <translation>모니터 S/W 업그레이드(&amp;S)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="82"/>
+        <location filename="mainwindow.cpp" line="89"/>
         <source>&amp;Exit</source>
         <translation>종료(&amp;Z)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
-        <location filename="mainwindow.cpp" line="479"/>
+        <location filename="mainwindow.cpp" line="166"/>
+        <location filename="mainwindow.cpp" line="572"/>
         <source>Directory</source>
         <translation>디렉토리</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
-        <location filename="mainwindow.cpp" line="479"/>
+        <location filename="mainwindow.cpp" line="166"/>
+        <location filename="mainwindow.cpp" line="572"/>
         <source>Download</source>
         <translation>다운로드</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
-        <location filename="mainwindow.cpp" line="479"/>
+        <location filename="mainwindow.cpp" line="166"/>
+        <location filename="mainwindow.cpp" line="572"/>
         <source>File</source>
         <translation>파일</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="147"/>
-        <location filename="mainwindow.cpp" line="479"/>
+        <location filename="mainwindow.cpp" line="166"/>
+        <location filename="mainwindow.cpp" line="572"/>
         <source>Subtitle</source>
         <translation>자막</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="238"/>
-        <location filename="mainwindow.cpp" line="255"/>
-        <location filename="mainwindow.cpp" line="531"/>
-        <location filename="mainwindow.cpp" line="630"/>
-        <location filename="mainwindow.cpp" line="663"/>
+        <location filename="mainwindow.cpp" line="269"/>
+        <location filename="mainwindow.cpp" line="286"/>
+        <location filename="mainwindow.cpp" line="373"/>
+        <location filename="mainwindow.cpp" line="437"/>
+        <location filename="mainwindow.cpp" line="624"/>
+        <location filename="mainwindow.cpp" line="641"/>
+        <location filename="mainwindow.cpp" line="784"/>
+        <location filename="mainwindow.cpp" line="807"/>
+        <location filename="mainwindow.cpp" line="868"/>
+        <location filename="mainwindow.cpp" line="903"/>
         <source>FTP</source>
         <translation>FTP</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="239"/>
+        <location filename="mainwindow.cpp" line="270"/>
         <source>Unable to connect to the FTP server at %1. Please check that the host name is correct.</source>
         <translation>연결 할 수 없습니다. 아이피(%1)를 확인하세요.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="255"/>
+        <location filename="mainwindow.cpp" line="286"/>
         <source>Can&apos;t log in. Please check that the id or password is correct.</source>
         <translation>로그인 할 수 없습니다. 아이디 및 패스워드를 확인하세요.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="532"/>
+        <location filename="mainwindow.cpp" line="625"/>
+        <location filename="mainwindow.cpp" line="642"/>
         <source>Unable to read the file %1: %2.</source>
         <translation>파일을 읽을 수 없습니다(%1:%2).</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="631"/>
+        <location filename="mainwindow.cpp" line="374"/>
+        <location filename="mainwindow.cpp" line="438"/>
+        <location filename="mainwindow.cpp" line="785"/>
+        <location filename="mainwindow.cpp" line="869"/>
         <source>Unable to write the file %1: %2.</source>
         <translation>파일을 쓸 수 없습니다(%1:%2).</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="664"/>
+        <location filename="mainwindow.cpp" line="808"/>
+        <location filename="mainwindow.cpp" line="904"/>
         <source>Unable to save the file %1: %2.</source>
         <translation>파일을 저장할 수 없습니다(%1:%2).</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="776"/>
+        <location filename="mainwindow.cpp" line="1016"/>
         <source>Video/Picture(&amp;V)</source>
         <translation>영상/그림(&amp;V)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="777"/>
+        <location filename="mainwindow.cpp" line="1017"/>
         <source>Subtitle(&amp;S)</source>
         <translation>자막(&amp;S)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="778"/>
+        <location filename="mainwindow.cpp" line="1018"/>
         <source>Create Directory(&amp;C)</source>
         <translation>디렉토리 생성(&amp;C)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="779"/>
+        <location filename="mainwindow.cpp" line="1019"/>
         <source>Remove Directory(&amp;D)</source>
         <translation>디렉토리 삭제(&amp;D)</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="801"/>
+        <location filename="mainwindow.cpp" line="1042"/>
         <source>Delete Confirm</source>
         <translation>삭제확인</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="802"/>
+        <location filename="mainwindow.cpp" line="1043"/>
         <source>Are you sure to remove this(%1) directory?
 If files in it. All files deleted.</source>
         <translation>이 디렉토리(%1)를 삭제하시겠습니까?
 파일이 있다면 모두 삭제됩니다.</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="804"/>
+        <location filename="mainwindow.cpp" line="1045"/>
         <source>Yes</source>
         <translation>예</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="805"/>
+        <location filename="mainwindow.cpp" line="1046"/>
         <source>Cancel</source>
         <translation>아니요</translation>
     </message>
@@ -208,24 +218,33 @@ If files in it. All files deleted.</source>
         <translation>모니터 감시</translation>
     </message>
     <message>
-        <location filename="monitor.cpp" line="24"/>
+        <location filename="monitor.cpp" line="37"/>
         <source>Status</source>
         <translation>상태</translation>
     </message>
     <message>
-        <location filename="monitor.cpp" line="24"/>
+        <location filename="monitor.cpp" line="37"/>
         <source>Time Passed</source>
         <translation>지난시간</translation>
     </message>
     <message>
-        <location filename="monitor.cpp" line="24"/>
+        <location filename="monitor.cpp" line="37"/>
         <source>Monitor Name,Location</source>
         <translation>모니터 명칭, 위치</translation>
     </message>
     <message>
-        <location filename="monitor.cpp" line="24"/>
+        <location filename="monitor.cpp" line="58"/>
+        <source>FTP</source>
+        <translation>FTP</translation>
+    </message>
+    <message>
+        <location filename="monitor.cpp" line="59"/>
+        <source>Unable to save the file %1: %2.</source>
+        <translation>파일을 저장할 수 없습니다(%1:%2).</translation>
+    </message>
+    <message>
         <source>Version</source>
-        <translation>버전</translation>
+        <translation type="vanished">버전</translation>
     </message>
 </context>
 <context>
@@ -361,6 +380,16 @@ If files in it. All files deleted.</source>
         <location filename="subtitle.ui" line="143"/>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <location filename="subtitle.cpp" line="29"/>
+        <source>FTP</source>
+        <translation>FTP</translation>
+    </message>
+    <message>
+        <location filename="subtitle.cpp" line="30"/>
+        <source>Unable to write the file %1: %2.</source>
+        <translation>파일을 쓸 수 없습니다(%1:%2).</translation>
     </message>
 </context>
 <context>

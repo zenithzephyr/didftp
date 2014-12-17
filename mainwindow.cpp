@@ -24,6 +24,8 @@ QStringList delDirList;
 QStringList delFileList;
 QStringList unparsedDelDir;
 QStringList undeletedList;
+QStringList macList;
+QStringList macFileList;
 QString deleteRoot;
 
 int num = 0;
@@ -96,7 +98,10 @@ void MainWindow::updateStatusBar()
 
 void MainWindow::showMonitor()
 {
-    monitor->show();
+    ftpmode = HEARTBEAT;
+    ftp->list("{heartbeat}");
+
+    //monitor->show();
 }
 
 void MainWindow::showUpload(QModelIndex index) //FIXME : my name
@@ -157,7 +162,7 @@ void MainWindow::createTable()
 {
     ui->ftpList->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->ftpList->setColumnCount(4);
-    ui->ftpList->setRowCount(40);
+    //ui->ftpList->setRowCount(40);
     ui->ftpList->setHorizontalHeaderLabels(QStringList() << tr("Directory") << tr("Download") << tr("File") << tr("Subtitle"));
     ui->ftpList->horizontalHeader()->resizeSections(QHeaderView::ResizeToContents);
     ui->ftpList->horizontalHeader()->setStretchLastSection(true);
@@ -181,11 +186,19 @@ void MainWindow::addToList(QUrlInfo url)
             delFileList << currentDirectory + "/" + url.name();
         }
     }
+    else if(ftpmode == HEARTBEAT)
+    {
+        if(url.isFile() && url.name().endsWith("mac"))
+        {
+            macList << url.name(); //for FTP download
+            macFileList << url.name(); //for downloaded file
+        }
+    }
     else //NORMAL
     {
         //qDebug()<<url.name();
 
-        if(url.isDir() && !url.isSymLink()) //directory
+        if(url.isDir() && !url.isSymLink() && url.name() != "{heartbeat}") //directory
         {
             if(currentDirectory.isEmpty()) //root directory
                 unparsedDirectory << url.name();
@@ -195,7 +208,7 @@ void MainWindow::addToList(QUrlInfo url)
 
         if(currentDirectory.isEmpty())
         {
-            if(url.isDir() && !url.isSymLink())
+            if(url.isDir() && !url.isSymLink() && url.name() != "{heartbeat}")
             {
                 fullFilesList << url.name() + "/";
                 fullFilesMap[url.name() + "/"] = url;
@@ -349,6 +362,28 @@ void MainWindow::ftpCommandFinished(int, bool error)
                 undeletedList.removeFirst();
             }
         }
+        else if(ftpmode == HEARTBEAT)
+        {
+            if(macList.size())
+            {
+                QString fileName = macList.at(0);
+                file = new QFile(fileName);
+
+        if (!file->open(QIODevice::WriteOnly)) {
+            QMessageBox::information(this, tr("FTP"),
+                                     tr("Unable to write the file %1: %2.")
+                                     .arg(fileName).arg(file->errorString()));
+            delete file;
+        }
+
+                ftp->get("{heartbeat}/" + macList.at(0), file);
+                macList.removeFirst();
+            }
+            else
+            {
+                monitor->show();
+            }
+        }
         else
         {
             if(unparsedDirectory.size())
@@ -391,6 +426,29 @@ void MainWindow::ftpCommandFinished(int, bool error)
             getPlaylist();
         else if(ftpmode == GETSUB)
             getSubtitle();
+        else if(ftpmode == HEARTBEAT)
+        {
+            if(macList.size())
+            {
+                        QString fileName = macList.at(0);
+                file = new QFile(fileName);
+
+        if (!file->open(QIODevice::WriteOnly)) {
+            QMessageBox::information(this, tr("FTP"),
+                                     tr("Unable to write the file %1: %2.")
+                                     .arg(fileName).arg(file->errorString()));
+            delete file;
+        }
+            ftp->get("{heartbeat}/"+macList.at(0),file);
+            macList.removeFirst();
+            }
+            else
+            {
+               monitor->initData(macFileList);
+               macFileList.clear();
+               //monitor->show();
+            }
+        }
     }
 
     if(ftp->currentCommand() == QFtp::Put)
@@ -500,11 +558,14 @@ void MainWindow::refreshTable()
     subtitleMap.clear();
     num = 0;
     row = 0;
+    ui->ftpList->setRowCount(0);
 
     delDirList.clear();
     delFileList.clear();
     unparsedDelDir.clear();
     undeletedList.clear();
+    macList.clear();
+    macFileList.clear();
     deleteRoot="";
 
     ui->ftpList->clear();
@@ -590,6 +651,8 @@ void MainWindow::uploadSubtitle(QString path)
 void MainWindow::makeTableData()
 {
     int i,j;
+    if(ui->ftpList->rowCount()-1 < 0)
+        ui->ftpList->insertRow(ui->ftpList->rowCount());
     QTableWidgetItem *item = new QTableWidgetItem("/"); //root
     ui->ftpList->setItem(0,0,item);
     row++;
@@ -618,6 +681,9 @@ void MainWindow::makeTableData()
 
     if(!TimeMap["/"].isEmpty())
     {
+    if(ui->ftpList->rowCount()-1 < hasSubTime)
+        ui->ftpList->insertRow(ui->ftpList->rowCount());
+
         QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap["/"]);
         ui->ftpList->setItem(hasSubTime,1,item2);
     }
@@ -640,6 +706,8 @@ void MainWindow::makeTableData()
     {
         if(!fullFilesList.at(i).contains("/")) //root dir files
         {
+    if(ui->ftpList->rowCount()-1 < row)
+        ui->ftpList->insertRow(ui->ftpList->rowCount());
             QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(i)].name());
             ui->ftpList->setItem(row,2,item);
             row++;
@@ -648,6 +716,8 @@ void MainWindow::makeTableData()
 
     for(i=0;i<fullDirList.size();i++)
     {
+    if(ui->ftpList->rowCount()-1 < row)
+        ui->ftpList->insertRow(ui->ftpList->rowCount());
         QString dir = fullDirList.at(i);
         dir.remove(fullDirList.at(i).size()-1,1);
         QTableWidgetItem *item = new QTableWidgetItem("/"+dir);
@@ -670,6 +740,8 @@ void MainWindow::makeTableData()
 
         if(!TimeMap[fullDirList.at(i)].isEmpty())
         {
+    if(ui->ftpList->rowCount()-1 < row+hasSubTime)
+        ui->ftpList->insertRow(ui->ftpList->rowCount());
             QTableWidgetItem *item2 = new QTableWidgetItem(TimeMap[fullDirList.at(i)]);
             ui->ftpList->setItem(row+hasSubTime,1,item2);
         }
@@ -689,6 +761,8 @@ void MainWindow::makeTableData()
                             && !(fullFilesList.at(j) == fullDirList.at(i))
                             && (fullFilesList.at(j).count("/") == fullDirList.at(i).count("/")))
             {
+    if(ui->ftpList->rowCount()-1 < row)
+        ui->ftpList->insertRow(ui->ftpList->rowCount());
                 QTableWidgetItem *item = new QTableWidgetItem(fullFilesMap[fullFilesList.at(j)].name());
                 ui->ftpList->setItem(row,2,item);
                 row++;
@@ -732,8 +806,8 @@ QString MainWindow::getSubText(QString path, QString fileName)
     if (!pFile->open(QIODevice::ReadOnly)) {
         QMessageBox::information(this, tr("FTP"),
                                  tr("Unable to save the file %1: %2.")
-                                 .arg(fileName).arg(file->errorString()));
-        delete file;
+                                 .arg(fileName).arg(pFile->errorString()));
+        delete pFile;
     }
 
     QTextStream in(pFile);
@@ -828,8 +902,8 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     if (!pFile->open(QIODevice::ReadOnly)) {
         QMessageBox::information(this, tr("FTP"),
                                  tr("Unable to save the file %1: %2.")
-                                 .arg(fileName).arg(file->errorString()));
-        delete file;
+                                 .arg(fileName).arg(pFile->errorString()));
+        delete pFile;
     }
 
     QTextStream in(pFile);
@@ -993,4 +1067,10 @@ void MainWindow::showCreateDir(QString currentDir)
 void MainWindow::doCreateDir(QString dir)
 {
     ftp->mkdir(dir);
+}
+
+void MainWindow::refreshMonitor()
+{
+    ftpmode = HEARTBEAT;
+    ftp->list("{heartbeat}");
 }
