@@ -831,7 +831,8 @@ QString MainWindow::getSubText(QString path, QString fileName)
             QString clist = token.at(1);
             QDateTime dtime;
 
-            clist.remove(clist.size()-1,1);
+            //clist.remove(clist.size()-1,1);
+            clist.remove(clist.size()-2,2); //for window
             dtime.setTime_t(clist.toInt());
             SubTimeMap[path] =dtime.toString("yyyy/MM/dd hh:mm:ss");
         }
@@ -928,7 +929,8 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
             QString clist = token.at(1);
             QDateTime dtime;
 
-            clist.remove(clist.size()-1,1);
+            clist.remove(clist.size()-2,2); //for window
+            //clist.remove(clist.size()-1,1);
             dtime.setTime_t(clist.toInt());
             TimeMap[path] =dtime.toString("yyyy/MM/dd hh:mm:ss");
         }

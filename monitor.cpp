@@ -131,7 +131,7 @@ void Monitor::initData(QStringList monitorList)
 
 void Monitor::onTimer()
 {
-    if(this->isEnabled())
+    if(this->isVisible())
     {
         qDebug() <<"TIMER";
         emit refreshMonitor();
