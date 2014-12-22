@@ -347,9 +347,9 @@ void MainWindow::ftpCommandFinished(int, bool error)
                     qDebug() << delDirList.at(i);
                 for(i=0;i<delFileList.size();i++)
                     qDebug() << delFileList.at(i);
-#endif
                 for(i=0;i<undeletedList.size();i++)
                     qDebug() << undeletedList.at(i);
+#endif
 
 
                 QString dir = undeletedList.at(0);
@@ -664,7 +664,7 @@ void MainWindow::makeTableData()
     row++;
 
     //debug
-#if 1
+#if 0
     for(i=0;i<fullFilesList.size();i++)
         qDebug() << fullFilesList.at(i);
 #endif
@@ -902,6 +902,7 @@ void MainWindow::getSubtitle() //chain reaction
 
 void MainWindow::manipulateData(const QString &path, const QString &fileName)
 {
+    //qDebug() << "path " << path << ",filename " << fileName;
     //parse playlist.txt
     QFile *pFile = new QFile(fileName);
 
@@ -915,6 +916,8 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
     QTextStream in(pFile);
     QString line;
     QStringList playlistFiles;
+
+    in.setCodec(QTextCodec::codecForName("eucKR"));
 
     do {
         line = in.readLine();
