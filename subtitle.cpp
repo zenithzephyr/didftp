@@ -33,8 +33,8 @@ void Subtitle::makeSubtitle()
     QDateTime now = QDateTime::currentDateTime();
     out.setCodec(QTextCodec::codecForName("eucKR"));
 
-    out << "[ver:1]\r\n";
-    out << "[send:" + QString::number(now.toTime_t()) + "]\r\n";
+    out << "[ver:1]\n";
+    out << "[send:" + QString::number(now.toTime_t()) + "]\n";
     out << ui->subtitleEdit->toPlainText();
     file.close();
 }

@@ -85,8 +85,8 @@ void Upload::makePlaylist()
     QTextStream out(&file);
     QDateTime now = QDateTime::currentDateTime();
 
-    out << "[ver:1]\r\n";
-    out << "[send:" + QString::number(now.toTime_t()) + "]\r\n";
+    out << "[ver:1]\n";
+    out << "[send:" + QString::number(now.toTime_t()) + "]\n";
     int i;
     for(i=0;i<ui->fileList->count();i++)
     {
@@ -105,9 +105,9 @@ void Upload::makePlaylist()
             qDebug() <<"SIZE : " << fileSize;
         }
 
-        out << "[" + info.fileName() + "," + fileSize + "]\r\n";
+        out << "[" + info.fileName() + "," + fileSize + "]\n";
     }
-    out << "[end]\r\n";
+    out << "[end]\n";
     file.close();
 }
 

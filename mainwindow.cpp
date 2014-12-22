@@ -135,8 +135,11 @@ void MainWindow::showUpload(QModelIndex index) //FIXME : my name
             {
                 if(!fullFilesList.at(i).contains("/"))
                 {
-                    directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
-                    tmpFiles[fullFilesMap[fullFilesList.at(i)].name()] = fullFilesMap[fullFilesList.at(i)].size();
+                    if(fullFilesMap[fullFilesList.at(i)].name() != "subtitle.txt")
+                    {
+                        directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
+                        tmpFiles[fullFilesMap[fullFilesList.at(i)].name()] = fullFilesMap[fullFilesList.at(i)].size();
+                    }
                 }
             }
         }
@@ -147,8 +150,11 @@ void MainWindow::showUpload(QModelIndex index) //FIXME : my name
                 if(fullFilesList.at(i).contains(token) &&
                                 (fullFilesList.at(i).count("/") == token.count("/")) && fullFilesList.at(i) != token)
                 {
-                    directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
-                    tmpFiles[fullFilesMap[fullFilesList.at(i)].name()] = fullFilesMap[fullFilesList.at(i)].size();
+                    if(fullFilesMap[fullFilesList.at(i)].name() != "subtitle.txt")
+                    {
+                        directoryFiles << fullFilesMap[fullFilesList.at(i)].name();
+                        tmpFiles[fullFilesMap[fullFilesList.at(i)].name()] = fullFilesMap[fullFilesList.at(i)].size();
+                    }
                 }
             }
         }
@@ -831,8 +837,7 @@ QString MainWindow::getSubText(QString path, QString fileName)
             QString clist = token.at(1);
             QDateTime dtime;
 
-            //clist.remove(clist.size()-1,1);
-            clist.remove(clist.size()-2,2); //for window
+            clist.remove(clist.size()-1,1);
             dtime.setTime_t(clist.toInt());
             SubTimeMap[path] =dtime.toString("yyyy/MM/dd hh:mm:ss");
         }
@@ -929,8 +934,7 @@ void MainWindow::manipulateData(const QString &path, const QString &fileName)
             QString clist = token.at(1);
             QDateTime dtime;
 
-            clist.remove(clist.size()-2,2); //for window
-            //clist.remove(clist.size()-1,1);
+            clist.remove(clist.size()-1,1);
             dtime.setTime_t(clist.toInt());
             TimeMap[path] =dtime.toString("yyyy/MM/dd hh:mm:ss");
         }
