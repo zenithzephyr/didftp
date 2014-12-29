@@ -48,6 +48,10 @@ MainWindow::MainWindow(QWidget *parent) :
     subtitle = new Subtitle(this);
     ftp = new QFtp();
 
+    keepTimer = new QTimer(this);
+    connect(keepTimer, SIGNAL(timeout()), this, SLOT(keepConnection()));
+    keepTimer->start(30000);
+
     login->show();
 
     ui->ftpList->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -199,6 +203,10 @@ void MainWindow::addToList(QUrlInfo url)
             macList << url.name(); //for FTP download
             macFileList << url.name(); //for downloaded file
         }
+    }
+    else if(ftpmode == KEEPCONNECT)
+    {
+        //do nothing
     }
     else //NORMAL
     {
@@ -389,6 +397,10 @@ void MainWindow::ftpCommandFinished(int, bool error)
             {
                 monitor->show();
             }
+        }
+        else if(ftpmode == KEEPCONNECT)
+        {
+           //do nothing
         }
         else
         {
@@ -1082,4 +1094,11 @@ void MainWindow::refreshMonitor()
 {
     ftpmode = HEARTBEAT;
     ftp->list("{heartbeat}");
+}
+
+void MainWindow::keepConnection() //Timer
+{
+    ftpmode = KEEPCONNECT;
+    ftp->list("{heartbeat}");
+    qDebug() << "keep connection";
 }

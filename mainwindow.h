@@ -35,7 +35,8 @@ public:
         UPLOAD,
         GETPLAY,
         GETSUB,
-        HEARTBEAT
+        HEARTBEAT,
+        KEEPCONNECT
     };
 
 private:
@@ -56,6 +57,7 @@ private:
     CreateDir *createdir;
     Monitor *monitor;
     Subtitle *subtitle;
+    QTimer *keepTimer;
 
     int ftpmode;
     int row;
@@ -78,6 +80,7 @@ private slots:
     void showContextMenu(QPoint point);
     void refreshTable();
     void refreshMonitor();
+    void keepConnection();
     void showMonitor();
     void showUpload(QModelIndex index);
     void doCreateDir(QString dir);
